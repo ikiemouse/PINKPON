@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PINKPON CAM — Frame Customizer 💗</title>
+  <link rel="icon" href="flower.png" type="image/png" />
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --pink:#ff4f8b;
+      --bg1:#ffe6f2;
+      --bg2:#fff0f8;
+    }
+    *{box-sizing:border-box}
+    body{
+      font-family:'Poppins',sans-serif;
+      background:linear-gradient(135deg,var(--bg1),var(--bg2));
+      color:var(--pink);
+      margin:0;
+      padding:20px;
+      text-align:center;
+    }
+    h1{font-family:'Baloo 2',cursive;margin:6px 0 4px;font-size:clamp(1.6rem,4.5vw,2.4rem);text-shadow:0 2px 8px rgba(255,200,220,0.6)}
+    p.lead{margin-top:0;color:#ff87b0}
+    #topControls{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:12px 0 18px}
+    .control-card{background:#fff;border-radius:12px;padding:10px 12px;box-shadow:0 6px 18px rgba(255,150,190,0.12);min-width:160px}
+    .small{font-size:0.9rem;color:#ff6f9f}
+    #photoContainer{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin:14px 0}
+    .thumbWrap{position:relative;width:120px;height:160px;border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 6px 18px rgba(255,150,190,0.12);cursor:pointer}
+    .thumbWrap img{width:100%;height:100%;object-fit:cover;display:block}
+    .thumbCheckbox{position:absolute;top:8px;left:8px;background:rgba(255,255,255,0.9);border-radius:6px;padding:4px}
+    .thumbWrap.selected{box-shadow:0 10px 28px rgba(255,120,170,0.25);outline:3px solid rgba(255,79,139,0.12)}
+    #frameChoices{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:16px 0}
+    .frame-btn{padding:8px 12px;border-radius:10px;border:2px solid #ffd7e6;background:#fff;color:var(--pink);cursor:pointer;font-weight:600}
+    .frame-btn.active{background:linear-gradient(90deg,var(--pink),#ff95c5);color:#fff;border-color:var(--pink);box-shadow:0 6px 18px rgba(255,120,170,0.18)}
+    #colorRow{display:flex;gap:8px;align-items:center;justify-content:center;margin:10px 0;flex-wrap:wrap}
+    #colorPicker{width:44px;height:36px;border-radius:8px;border:2px solid #fff;box-shadow:0 6px 18px rgba(255,150,190,0.08);cursor:pointer}
+    #slotInfo{margin-top:6px;color:#ff6f9f;font-weight:600}
+    #canvasWrap{display:flex;justify-content:center;margin:20px 0}
+    #resultCanvas{background:#fff;border-radius:12px;box-shadow:0 12px 34px rgba(255,150,190,0.12);max-width:95vw;height:auto}
+    #actionRow{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+    button.action{padding:10px 14px;border-radius:10px;border:none;background:linear-gradient(90deg,var(--pink),#ff95c5);color:#fff;font-weight:700;cursor:pointer;box-shadow:0 6px 18px rgba(255,120,170,0.15)}
+    button.action:disabled{background:#ddd;color:#777;cursor:not-allowed}
+    .muted{font-size:0.9rem;color:#ff87b0}
+    footer{margin-top:18px;color:#ff9db8;font-size:0.85rem}
+    /* orientation toggle */
+    .orientRow{display:flex;gap:6px;align-items:center;justify-content:center;margin-top:8px}
+    .orientBtn{padding:6px 8px;border-radius:8px;border:2px solid #ffd7e6;background:#fff;color:var(--pink);cursor:pointer}
+    .orientBtn.active{background:linear-gradient(90deg,var(--pink),#ff95c5);color:#fff;border-color:var(--pink)}
+    @media (max-width:600px){
+      .thumbWrap{width:90px;height:120px}
+      .control-card{min-width:unset}
+    }
+  </style>
+</head>
+<body>
+  <h1>Frame Customizer ✨</h1>
+  <p class="lead">Pilih foto, jenis frame, atur warna — lalu tekan <strong>Buat Frame Sekarang</strong></p>
+
+  <div id="topControls">
+    <div class="control-card">
+      <div class="small">Pilih Foto</div>
+      <div class="muted">Klik thumbnail untuk memilih (maks sesuai frame)</div>
+    </div>
+
+    <div class="control-card">
+      <div class="small">Tipe Frame</div>
+      <div id="frameChoices">
+        <button class="frame-btn active" data-type="polaroid">📸 Polaroid</button>
+        <button class="frame-btn" data-type="grid">🪞 Grid (2x2)</button>
+        <button class="frame-btn" data-type="strip">🎞️ Strip</button>
+        <button class="frame-btn" data-type="two">🫶 1 Frame - 2 Foto</button>
+        <button class="frame-btn" data-type="noframe">🤍 Tanpa Frame</button>
+      </div>
+      <div class="orientRow" id="orientRow" style="display:none">
+        <div class="small">Orientation:</div>
+        <button class="orientBtn active" data-orient="horizontal">↔️ Horizontal</button>
+        <button class="orientBtn" data-orient="vertical">↕️ Vertical</button>
+      </div>
+    </div>
+
+    <div class="control-card">
+      <div class="small">Warna Frame</div>
+      <div id="colorRow">
+        <input id="colorPicker" type="color" value="#ffffff" title="Pilih warna frame" />
+        <div class="muted">Default: putih</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="slotInfo">Maks foto yang bisa dipilih: <span id="maxSlots">1</span></div>
+
+  <div id="photoContainer"></div>
+
+  <div style="display:flex;justify-content:center;gap:8px;margin-top:6px">
+    <button id="buildBtn" class="action">🎨 Buat Frame Sekarang</button>
+    <button id="downloadPNG" class="action" disabled>💾 Simpan PNG</button>
+    <button id="downloadPDF" class="action" disabled>📄 Simpan PDF</button>
+    <button id="printBtn" class="action" disabled>🖨️ Print</button>
+    <button id="shareBtn" class="action" disabled>📤 Share</button>
+    <button id="backBtn" class="action">⬅️ Kembali ke Kamera</button>
+  </div>
+
+  <div id="canvasWrap">
+    <canvas id="resultCanvas" width="800" height="1000"></canvas>
+  </div>
+
+  <footer>© 2025 PINKPON Project by PINKPON group🌷</footer>
+
+  <!-- jsPDF untuk export PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <script>
+    // ambil foto dari localStorage
+    const stored = JSON.parse(localStorage.getItem('capturedPhotos') || '[]');
+    const photoContainer = document.getElementById('photoContainer');
+    const frameBtns = document.querySelectorAll('.frame-btn');
+    const orientButtons = document.querySelectorAll('.orientBtn');
+    const orientRow = document.getElementById('orientRow');
+    const maxSlotsLabel = document.getElementById('maxSlots');
+    const colorPicker = document.getElementById('colorPicker');
+    const buildBtn = document.getElementById('buildBtn');
+    const downloadPNG = document.getElementById('downloadPNG');
+    const downloadPDF = document.getElementById('downloadPDF');
+    const printBtn = document.getElementById('printBtn');
+    const shareBtn = document.getElementById('shareBtn');
+    const backBtn = document.getElementById('backBtn');
+    const canvas = document.getElementById('resultCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // state
+    let selected = new Set();
+    let frameType = 'polaroid';
+    let orient = 'horizontal';
+    let frameColor = colorPicker.value; // default putih
+    let slotsNeeded = 1;
+
+    // helper: create thumb grid
+    function renderThumbs() {
+      photoContainer.innerHTML = '';
+      if (!stored.length) {
+        photoContainer.innerHTML = '<p class="muted">Belum ada foto. Kembali ke kamera untuk ambil foto dulu.</p>';
+        return;
+      }
+      stored.forEach((src, i) => {
+        const wrap = document.createElement('div');
+        wrap.className = 'thumbWrap';
+        wrap.dataset.index = i;
+        const img = document.createElement('img');
+        img.src = src;
+        wrap.appendChild(img);
+        const cb = document.createElement('label');
+        cb.className = 'thumbCheckbox';
+        cb.innerHTML = `<input type="checkbox" data-index="${i}" ${selected.has(i) ? 'checked' : ''} />`;
+        wrap.appendChild(cb);
+        wrap.addEventListener('click', (e) => {
+          // toggle, but enforce max selection
+          const idx = Number(wrap.dataset.index);
+          toggleSelect(idx, wrap);
+        });
+        if (selected.has(i)) wrap.classList.add('selected');
+        photoContainer.appendChild(wrap);
+      });
+    }
+
+    function toggleSelect(idx, wrapEl){
+      if (selected.has(idx)) {
+        selected.delete(idx);
+        wrapEl.classList.remove('selected');
+      } else {
+        if (selected.size >= slotsNeeded) {
+          // jika sudah penuh, ganti pilihan pertama yang dipilih (UX fleksibel)
+          alert(`Maks ${slotsNeeded} foto untuk tipe frame ini. Kalau mau ganti, hapus pilihan terlebih dahulu.`);
+          return;
+        }
+        selected.add(idx);
+        wrapEl.classList.add('selected');
+      }
+      // synchronise checkboxes
+      photoContainer.querySelectorAll('input[type="checkbox"]').forEach(input=>{
+        const id = Number(input.dataset.index);
+        input.checked = selected.has(id);
+      });
+    }
+
+    // frame button handlers
+    function setFrameType(t){
+      frameType = t;
+      frameBtns.forEach(b=>b.classList.toggle('active', b.dataset.type===t));
+      // set slots
+      switch(t){
+        case 'polaroid': slotsNeeded = 1; orientRow.style.display='none'; break;
+        case 'grid': slotsNeeded = 4; orientRow.style.display='none'; break;
+        case 'strip': slotsNeeded = 4; orientRow.style.display='none'; break;
+        case 'two': slotsNeeded = 2; orientRow.style.display='flex'; break;
+        case 'noframe': slotsNeeded = 1; orientRow.style.display='none'; break;
+      }
+      maxSlotsLabel.textContent = slotsNeeded;
+      // if selected more than slots, remove extras
+      if (selected.size > slotsNeeded) {
+        // keep first N
+        const keep = Array.from(selected).slice(0, slotsNeeded);
+        selected = new Set(keep);
+        renderThumbs();
+      }
+    }
+    frameBtns.forEach(b=>b.addEventListener('click', ()=>setFrameType(b.dataset.type)));
+
+    // orientation
+    orientButtons.forEach(b=>{
+      b.addEventListener('click', ()=>{
+        orientButtons.forEach(x=>x.classList.remove('active'));
+        b.classList.add('active');
+        orient = b.dataset.orient;
+      });
+    });
+
+    // color picker
+    colorPicker.addEventListener('input', (e)=>{
+      frameColor = e.target.value;
+    });
+
+    // initial render
+    renderThumbs();
+    setFrameType('polaroid');
+
+    // utility: draw image cover (crop center) into box preserving aspect ratio
+    function drawImageCover(img, x, y, w, h) {
+      const iw = img.naturalWidth;
+      const ih = img.naturalHeight;
+      if (!iw || !ih) return;
+      const scale = Math.max(w / iw, h / ih);
+      const sw = w / scale;
+      const sh = h / scale;
+      const sx = (iw - sw) / 2;
+      const sy = (ih - sh) / 2;
+      ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+    }
+
+    // draw rounded rect helper
+    function roundRect(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    // build frame
+    async function buildFrame(){
+      const sel = Array.from(selected);
+      if (sel.length === 0) return alert('Pilih minimal satu foto dulu ya 💗');
+      // disable action buttons while building
+      buildBtn.disabled = true;
+      downloadPNG.disabled = true;
+      downloadPDF.disabled = true;
+      printBtn.disabled = true;
+      shareBtn.disabled = true;
+      // prepare images array
+      const imgs = await Promise.all(sel.map(i=>{
+        return new Promise(res=>{
+          const im = new Image();
+          im.src = stored[i];
+          im.onload = ()=>res(im);
+          im.onerror = ()=>res(null);
+        });
+      }));
+
+      // clear canvas to white background
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      // background subtle
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+
+      // draw based on frame type
+      if (frameType === 'polaroid'){
+        // large image centered with polaroid border
+        // frame background (colored border around white polaroid)
+        const pad = 24;
+        const frameW = canvas.width - pad*2;
+        const frameH = Math.round(frameW * 1.05);
+        const frameX = pad;
+        const frameY = 60;
+        // outer colored border
+        roundRect(frameX-8, frameY-8, frameW+16, frameH+100, 20);
+        ctx.fillStyle = frameColor;
+        ctx.fill();
+        // inner white polaroid
+        roundRect(frameX, frameY, frameW, frameH+100, 14);
+        ctx.fillStyle = '#fff';
+        ctx.fill();
+
+        // image area inside polaroid (leave bottom label area)
+        const imgX = frameX + 18;
+        const imgY = frameY + 18;
+        const imgW = frameW - 36;
+        const imgH = frameH - 36;
+        drawImageCover(imgs[0], imgX, imgY, imgW, imgH);
+
+        // label
+        ctx.fillStyle = '#ff4f8b';
+        ctx.font = '700 22px Poppins, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('PINKPON CAM', canvas.width/2, frameY + frameH + 56);
+      } else if (frameType === 'grid'){
+        // 2x2 grid
+        const margin = 40;
+        const gridW = canvas.width - margin*2;
+        const cellW = Math.floor((gridW - 20)/2);
+        const cellH = Math.floor((canvas.height - 220 - margin*2)/2);
+        // frame background color behind cells
+        roundRect(margin-10, 40-10, gridW+20, cellH*2 + 20 + 140, 16);
+        ctx.fillStyle = frameColor;
+        ctx.fill();
+        // inner white
+        roundRect(margin, 40, gridW, cellH*2 + 20 + 120, 12);
+        ctx.fillStyle = '#fff';
+        ctx.fill();
+
+        const positions = [
+          {x: margin+10, y: 60, w: cellW, h: cellH},
+          {x: margin+10 + cellW + 10, y: 60, w: cellW, h: cellH},
+          {x: margin+10, y: 60 + cellH + 10, w: cellW, h: cellH},
+          {x: margin+10 + cellW + 10, y: 60 + cellH + 10, w: cellW, h: cellH}
+        ];
+        imgs.slice(0,4).forEach((im, idx)=>{
+          if (!im) return;
+          // draw white inner card for each
+          roundRect(positions[idx].x-6, positions[idx].y-6, positions[idx].w+12, positions[idx].h+12, 12);
+          ctx.fillStyle = '#fff';
+          ctx.fill();
+          drawImageCover(im, positions[idx].x, positions[idx].y, positions[idx].w, positions[idx].h);
+        });
+      } else if (frameType === 'strip'){
+        // vertical strip 4 panels centered
+        const stripW = Math.min(380, canvas.width - 120);
+        const x = (canvas.width - stripW)/2;
+        const gap = 18;
+        const totalH = (canvas.height - 180);
+        const cellH = Math.floor((totalH - gap*3)/4);
+        // draw colored border area
+        roundRect(x-14, 40-10, stripW+28, cellH*4 + gap*3 + 20 + 80, 18);
+        ctx.fillStyle = frameColor;
+        ctx.fill();
+        // inner white
+        roundRect(x, 40, stripW, cellH*4 + gap*3 + 20 + 60, 12);
+        ctx.fillStyle = '#fff';
+        ctx.fill();
+
+        imgs.slice(0,4).forEach((im, idx)=>{
+          if (!im) return;
+          const y = 60 + idx*(cellH + gap);
+          // image with some padding
+          drawImageCover(im, x + 12, y, stripW - 24, cellH);
+        });
+      } else if (frameType === 'two'){
+        // 1 frame 2 photo: horizontal or vertical based on orient
+        const pad = 60;
+        const areaW = canvas.width - pad*2;
+        const areaH = canvas.height - 160;
+        // colored background round
+        roundRect(pad-12, 40-12, areaW+24, areaH+24, 20);
+        ctx.fillStyle = frameColor;
+        ctx.fill();
+        // inner white
+        roundRect(pad, 40, areaW, areaH, 14);
+        ctx.fillStyle = '#fff';
+        ctx.fill();
+
+        if (orient === 'horizontal'){
+          const w = Math.floor((areaW - 18)/2);
+          const h = areaH - 24;
+          drawImageCover(imgs[0], pad+12, 52, w, h);
+          drawImageCover(imgs[1] || imgs[0], pad+12 + w + 18, 52, w, h);
+        } else {
+          const h = Math.floor((areaH - 18)/2);
+          const w = areaW - 24;
+          drawImageCover(imgs[0], pad+12, 52, w, h);
+          drawImageCover(imgs[1] || imgs[0], pad+12, 52 + h + 18, w, h);
+        }
+      } else if (frameType === 'noframe'){
+        // plain layout: put all selected photos tiled nicely
+        const cols = Math.min(4, selected.size);
+        const rows = Math.ceil(selected.size/cols);
+        const margin = 40;
+        const gridW = canvas.width - margin*2;
+        const cellW = Math.floor((gridW - (cols-1)*10)/cols);
+        const cellH = Math.floor((canvas.height - 160 - margin*2 - (rows-1)*10)/rows);
+        let idx=0;
+        for (let r=0;r<rows;r++){
+          for (let c=0;c<cols;c++){
+            if (idx >= imgs.length) break;
+            const x = margin + c*(cellW + 10);
+            const y = 60 + r*(cellH + 10);
+            drawImageCover(imgs[idx], x, y, cellW, cellH);
+            idx++;
+          }
+        }
+      }
+
+      // enable action buttons
+      downloadPNG.disabled = false;
+      downloadPDF.disabled = false;
+      printBtn.disabled = false;
+      shareBtn.disabled = false;
+      buildBtn.disabled = false;
+    }
+
+    // build button
+    buildBtn.addEventListener('click', buildFrame);
+
+    // save PNG
+    downloadPNG.addEventListener('click', ()=>{
+      canvas.toBlob(function(blob){
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'pinkpon_frame.png';
+        a.click();
+        URL.revokeObjectURL(url);
+      }, 'image/png');
+    });
+
+    // save PDF using jsPDF
+    downloadPDF.addEventListener('click', async ()=>{
+      const { jsPDF } = window.jspdf;
+      // scale canvas large enough to keep quality
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({unit:'px', format:[canvas.width, canvas.height]});
+      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+      pdf.save('pinkpon_frame.pdf');
+    });
+
+    // print
+    printBtn.addEventListener('click', ()=>{
+      const dataUrl = canvas.toDataURL('image/png');
+      const w = window.open('', '_blank');
+      w.document.write(`<html><head><title>Print</title></head><body style="margin:0"><img src="${dataUrl}" style="width:100%;height:auto"/></body></html>`);
+      w.document.close();
+      w.focus();
+      w.print();
+    });
+
+    // 🌸 Share hasil foto langsung ke sosial media
+shareBtn.addEventListener('click', async () => {
+  canvas.toBlob(async (blob) => {
+    const file = new File([blob], 'pinkpon_frame.png', { type: 'image/png' });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({
+          files: [file],
+          title: 'PINKPON CAM 💗',
+          text: 'Lihat hasil fotoku dari PINKPON CAM!',
+        });
+      } catch (err) {
+        console.error('Share dibatalkan:', err);
+      }
+    } else {
+      alert('Fitur share foto langsung belum didukung di browser ini 😢. Coba buka di HP ya!');
+    }
+  }, 'image/png');
+});
+
+
+    // back to camera
+    backBtn.addEventListener('click', ()=>{ window.location.href='index.html' });
+
+    // keep checkboxes in sync if user toggles input directly
+    photoContainer.addEventListener('change', (e)=>{
+      if (e.target && e.target.matches('input[type="checkbox"]')) {
+        const idx = Number(e.target.dataset.index);
+        const wrap = photoContainer.querySelector(`.thumbWrap[data-index="${idx}"]`);
+        if (e.target.checked) {
+          if (selected.size >= slotsNeeded) {
+            alert(`Maks ${slotsNeeded} foto untuk tipe frame ini.`);
+            e.target.checked = false;
+            return;
+          }
+          selected.add(idx);
+          wrap.classList.add('selected');
+        } else {
+          selected.delete(idx);
+          wrap.classList.remove('selected');
+        }
+      }
+    });
+
+    // keyboard hint: pressing numbers selects thumbnails (1..n)
+    document.addEventListener('keydown', (ev)=>{
+      const k = Number(ev.key);
+      if (k >=1 && k <= stored.length) {
+        const idx = k-1;
+        const wrap = photoContainer.querySelector(`.thumbWrap[data-index="${idx}"]`);
+        if (wrap) toggleSelect(idx, wrap);
+      }
+    });
+  </script>
+</body>
+</html>
