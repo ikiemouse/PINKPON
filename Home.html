@@ -53,17 +53,26 @@
       background: #fff;
       overflow: hidden;
       position: relative;
+
+      /* ensure wrapper centers its content and doesn't add unwanted padding */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      box-sizing: border-box;
     }
 
-    /* the actual <video> fills the wrapper and is centered */
+    /* the actual <video> fills the wrapper and is centered (force with !important to avoid overrides) */
     #camera {
       display: block;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      object-position: center center;
-      transform: scaleX(-1);
-      -webkit-transform: scaleX(-1);
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover !important;
+      object-position: 50% 50% !important; /* force center */
+      transform: scaleX(-1) !important;
+      -webkit-transform: scaleX(-1) !important;
+      margin: 0 !important;
+      box-sizing: border-box;
     }
 
     #photo {
@@ -302,6 +311,21 @@
       let currentFilter = 'none';
       let useTimer = true;
 
+      // Force center the video element (applies CSS via JS too to avoid overrides)
+      function forceCenterVideo() {
+        if (!video) return;
+        try {
+          video.style.objectPosition = '50% 50%';
+          video.style.objectFit = 'cover';
+          video.style.transform = 'scaleX(-1)';
+          video.style.margin = '0';
+          // optional debug log:
+          // console.log('Forced objectPosition:', window.getComputedStyle(video).objectPosition);
+        } catch (e) {
+          console.warn('forceCenterVideo error', e);
+        }
+      }
+
       // start camera and handle permission errors gracefully
       async function startCamera() {
         try {
@@ -309,10 +333,19 @@
           video.srcObject = stream;
           // update canvas size when metadata is available
           video.addEventListener('loadedmetadata', () => {
+            forceCenterVideo();
             updateCanvasSize();
           });
-          window.addEventListener('resize', () => updateCanvasSize());
-          window.addEventListener('orientationchange', () => setTimeout(updateCanvasSize, 200));
+          window.addEventListener('resize', () => {
+            forceCenterVideo();
+            updateCanvasSize();
+          });
+          window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+              forceCenterVideo();
+              updateCanvasSize();
+            }, 200);
+          });
         } catch (err) {
           console.error('getUserMedia error', err);
           alert('Tidak bisa akses kamera: ' + (err && err.message ? err.message : err));
@@ -320,6 +353,7 @@
       }
 
       // try to start camera immediately
+      forceCenterVideo();
       startCamera();
 
       // New: set canvas size based on displayed element size * DPR
@@ -340,7 +374,31 @@
         useTimer = timerToggle.checked;
       });
 
-      // compute visible source rect when video uses object-fit: cover
+      // helper: parse object-position string -> fractions 0..1
+      function parseObjectPosition(posStr) {
+        if (!posStr) posStr = '50% 50%';
+        const parts = posStr.trim().split(/\s+/);
+        let x = parts[0] || '50%';
+        let y = parts[1] || (parts[0] ? '50%' : '50%');
+
+        const kw = { left: '0%', center: '50%', right: '100%', top: '0%', bottom: '100%' };
+
+        if (kw[x]) x = kw[x];
+        if (kw[y]) y = kw[y];
+
+        const toFraction = v => {
+          if (typeof v === 'string' && v.endsWith('%')) {
+            return Math.max(0, Math.min(1, parseFloat(v) / 100));
+          }
+          const n = parseFloat(v);
+          if (isFinite(n)) return Math.max(0, Math.min(1, n));
+          return 0.5;
+        };
+
+        return { xFrac: toFraction(x), yFrac: toFraction(y) };
+      }
+
+      // compute visible source rect when video uses object-fit: cover and object-position
       function computeVisibleSourceRect() {
         const rect = video.getBoundingClientRect();
         const elemRatio = rect.width / rect.height;
@@ -351,19 +409,28 @@
         const videoRatio = vw / vh;
         let sx = 0, sy = 0, sw = vw, sh = vh;
 
+        // read CSS object-position of video (computed)
+        const style = window.getComputedStyle(video);
+        const objPos = style.objectPosition || '50% 50%';
+        const pos = parseObjectPosition(objPos); // { xFrac, yFrac }
+
         if (videoRatio > elemRatio) {
           // video is wider -> crop left/right
           sw = Math.round(vh * elemRatio);
-          sx = Math.round((vw - sw) / 2);
+          sx = Math.round((vw - sw) * pos.xFrac); // offset based on object-position x
           sy = 0;
           sh = vh;
         } else {
           // video is taller -> crop top/bottom
           sh = Math.round(vw / elemRatio);
-          sy = Math.round((vh - sh) / 2);
+          sy = Math.round((vh - sh) * pos.yFrac); // offset based on object-position y
           sx = 0;
           sw = vw;
         }
+
+        // clamp
+        sx = Math.max(0, Math.min(vw - sw, sx));
+        sy = Math.max(0, Math.min(vh - sh, sy));
 
         return { sx, sy, sw, sh };
       }
@@ -386,7 +453,6 @@
         const src = computeVisibleSourceRect();
 
         // mirror horizontally so result matches preview (preview is CSS-flipped)
-        // operate in canvas pixel coordinates
         ctx.save();
         ctx.setTransform(-1, 0, 0, 1, canvas.width, 0);
 
