@@ -166,7 +166,7 @@
 
     .thumb {
       width: 80px;
-      height: 100px;
+      height: auto; /* biar tidak gepeng; pertahankan aspect ratio */
       object-fit: cover;
       border: 3px solid #fff;
       border-radius: 8px;
@@ -216,7 +216,7 @@
 
   <div class="container">
     <video id="camera" autoplay playsinline></video>
-    <canvas id="photo" width="400" height="300" style="display:none;"></canvas>
+    <canvas id="photo" style="display:none;"></canvas>
     <div id="countdown">3</div>
   </div>
 
@@ -282,10 +282,36 @@
       alert("Kamu perlu memberi izin kamera dulu ya 💗");
     }
 
+    // Update canvas size based on actual video dimensions while keeping sizes reasonable
+    function updateCanvasSize() {
+      const vw = video.videoWidth;
+      const vh = video.videoHeight;
+      if (!vw || !vh) return;
+      // Batasi ukuran maksimum agar tidak terlalu besar pada ponsel
+      const MAX_WIDTH = 1600;
+      const scale = Math.min(1, MAX_WIDTH / vw);
+      canvas.width = Math.round(vw * scale);
+      canvas.height = Math.round(vh * scale);
+      // canvas tetap disembunyikan (dipakai hanya untuk capture), tapi set style width kalau mau men-debug:
+      canvas.style.width = Math.min(video.clientWidth || 400, 400) + 'px';
+      canvas.style.height = 'auto';
+    }
+
     async function startCamera() {
       try {
+        // bisa tambahkan preferensi aspect ratio / facingMode jika perlu
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         video.srcObject = stream;
+
+        // Saat metadata video siap, update ukuran canvas agar aspect ratio sama
+        video.addEventListener('loadedmetadata', () => {
+          updateCanvasSize();
+        });
+
+        // juga update ukuran ketika ukuran video berubah (beberapa perangkat)
+        video.addEventListener('resize', () => {
+          updateCanvasSize();
+        });
       } catch (err) {
         alert('Tidak bisa akses kamera: ' + err);
       }
@@ -298,11 +324,19 @@
 
     /* TAKE PHOTO */
     function takePhoto() {
+      // pastikan canvas sesuai aspect video saat ini
+      updateCanvasSize();
+
       const ctx = canvas.getContext('2d');
-      ctx.filter = currentFilter;
+      // terapkan filter yang sama ke canvas (jika ada)
+      ctx.filter = currentFilter || 'none';
+
+      // reset transform lalu mirror horizontally (agar sesuai tampilan video yang di-flip via CSS)
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.translate(canvas.width, 0);
       ctx.scale(-1, 1);
+
+      // draw video ke canvas dengan ukuran canvas yang sudah sesuai aspect ratio
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
       const dataURL = canvas.toDataURL("image/png");
