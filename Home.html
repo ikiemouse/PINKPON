@@ -2,12 +2,12 @@
 <html lang="id">
 <head>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.min.js"></script>
 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PINKPON CAM</title>
+  <title>PINKPON CAM 💖</title>
   <link rel="icon" href="flower.png" type="image/png">
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 
@@ -98,33 +98,64 @@
       display: none;
     }
 
-    #filterButtons {
+    /* FILTER CAROUSEL */
+    .filter-wrapper {
       display: flex;
+      align-items: center;
       justify-content: center;
-      flex-wrap: wrap;
-      gap: 8px;
       margin-top: 15px;
-      padding: 0 10px;
+      gap: 6px;
     }
 
-    .filter-btn {
-      border: 2px solid var(--pink-light);
+    .nav-btn {
+      background: var(--pink);
+      border: none;
+      color: white;
+      padding: 10px 14px;
+      font-size: 1rem;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 3px 10px #ff4f8b55;
+    }
+
+    .nav-btn:hover {
+      transform: scale(1.1);
+    }
+
+    .carousel {
+      display: flex;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+      gap: 10px;
+      padding: 8px;
+      width: 70vw;
+      max-width: 340px;
+    }
+
+    .carousel::-webkit-scrollbar {
+      display: none;
+    }
+
+    .filter-item {
+      white-space: nowrap;
+      padding: 8px 14px;
       background: white;
-      border-radius: 8px;
-      padding: 6px 10px;
-      font-size: 0.9rem;
+      border-radius: 10px;
+      border: 2px solid var(--pink-light);
       color: var(--pink);
       cursor: pointer;
-      transition: 0.3s;
+      font-size: 0.9rem;
+      transition: 0.25s;
     }
 
-    .filter-btn.active {
+    .filter-item.active {
       background: linear-gradient(90deg, #ff4f8b, #ff95c5);
       color: white;
       border-color: #ff4f8b;
       box-shadow: 0 2px 8px #ff8db877;
     }
 
+    /* Preview thumbnail */
     #preview {
       display: flex;
       justify-content: center;
@@ -142,6 +173,7 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     }
 
+    /* Toggle */
     .toggle {
       display: flex;
       justify-content: center;
@@ -157,7 +189,7 @@
       cursor: pointer;
     }
 
-    /* Efek hujan love */
+    /* Falling hearts */
     .heart {
       position: fixed;
       top: -10px;
@@ -171,6 +203,7 @@
       0% { transform: translateY(0) rotate(0deg); opacity: 1; }
       100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
     }
+
   </style>
 </head>
 <body>
@@ -187,22 +220,28 @@
     <div id="countdown">3</div>
   </div>
 
-  <!-- Tombol Filter -->
-  <div id="filterButtons">
-    <button class="filter-btn active" data-filter="none">✨ Normal</button>
-    <button class="filter-btn" data-filter="grayscale(100%)">🖤 B&W</button>
-    <button class="filter-btn" data-filter="sepia(60%)">🌻 Vintage</button>
-    <button class="filter-btn" data-filter="hue-rotate(190deg) saturate(130%)">💙 Blue Wash</button>
-    <button class="filter-btn" data-filter="contrast(110%) brightness(105%) saturate(120%)">🌞 Bright</button>
-    <button class="filter-btn" data-filter="hue-rotate(-20deg) saturate(120%) brightness(105%)">🌸 Soft Pink</button>
-    <button class="filter-btn" data-filter="hue-rotate(50deg) brightness(95%) saturate(90%)">🌿 Calm</button>
-    <button class="filter-btn" data-filter="contrast(130%) brightness(95%) saturate(140%)">🍓 Retro</button>
-    <button class="filter-btn" data-filter="brightness(120%) blur(1px)">🌈 Dreamy</button>
+  <!-- New Filter Carousel -->
+  <div class="filter-wrapper">
+    <button id="prevFilter" class="nav-btn">◀</button>
+
+    <div id="filterCarousel" class="carousel">
+      <div class="filter-item active" data-filter="none">✨ Normal</div>
+      <div class="filter-item" data-filter="grayscale(100%)">🖤 B&W</div>
+      <div class="filter-item" data-filter="sepia(60%)">🌻 Vintage</div>
+      <div class="filter-item" data-filter="hue-rotate(190deg) saturate(130%)">💙 Blue</div>
+      <div class="filter-item" data-filter="contrast(110%) brightness(105%) saturate(120%)">🌞 Bright</div>
+      <div class="filter-item" data-filter="hue-rotate(-20deg) saturate(120%) brightness(105%)">🌸 Soft Pink</div>
+      <div class="filter-item" data-filter="hue-rotate(50deg) brightness(95%) saturate(90%)">🌿 Calm</div>
+      <div class="filter-item" data-filter="contrast(130%) brightness(95%) saturate(140%)">🍓 Retro</div>
+      <div class="filter-item" data-filter="brightness(120%) blur(1px)">🌈 Dreamy</div>
+    </div>
+
+    <button id="nextFilter" class="nav-btn">▶</button>
   </div>
 
   <div id="controls">
-    <button id="capture">📸 Ambil Foto</button>
-    <button id="toFrame" disabled>➡️ Ke Frame</button>
+    <button id="capture">Click</button>
+    <button id="toFrame" disabled>Go to Frame</button>
   </div>
 
   <div id="preview"></div>
@@ -210,21 +249,8 @@
   <audio id="shutterSound" src="https://www.soundjay.com/mechanical/camera-shutter-click-01.mp3" preload="auto"></audio>
 
   <script>
-    const video = document.getElementById('camera');
-    const canvas = document.getElementById('photo');
-    const captureBtn = document.getElementById('capture');
-    const toFrameBtn = document.getElementById('toFrame');
-    const preview = document.getElementById('preview');
-    const countdown = document.getElementById('countdown');
-    const shutterSound = document.getElementById('shutterSound');
-    const filterButtons = document.querySelectorAll('.filter-btn');
-    const timerToggle = document.getElementById('timerToggle');
 
-    let photos = [];
-    let currentFilter = 'none';
-    let useTimer = true;
-
-    // Efek hujan love
+    /* Falling Hearts */
     function createHeart() {
       const heart = document.createElement('div');
       heart.classList.add('heart');
@@ -236,7 +262,20 @@
     }
     setInterval(createHeart, 200);
 
-    // Kamera otomatis (jika sudah diizinkan dari home)
+    /* CAMERA SETUP */
+    const video = document.getElementById('camera');
+    const canvas = document.getElementById('photo');
+    const captureBtn = document.getElementById('capture');
+    const toFrameBtn = document.getElementById('toFrame');
+    const preview = document.getElementById('preview');
+    const countdown = document.getElementById('countdown');
+    const shutterSound = document.getElementById('shutterSound');
+    const timerToggle = document.getElementById('timerToggle');
+
+    let photos = [];
+    let currentFilter = 'none';
+    let useTimer = true;
+
     if (localStorage.getItem("cameraAccess") === "granted") {
       startCamera();
     } else {
@@ -252,21 +291,12 @@
       }
     }
 
-    // Filter real-time
-    filterButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        filterButtons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentFilter = btn.getAttribute('data-filter');
-        video.style.filter = currentFilter;
-      });
-    });
-
-    // Timer toggle
+    /* TIMER */
     timerToggle.addEventListener('change', () => {
       useTimer = timerToggle.checked;
     });
 
+    /* TAKE PHOTO */
     function takePhoto() {
       const ctx = canvas.getContext('2d');
       ctx.filter = currentFilter;
@@ -312,69 +342,133 @@
       }
     };
 
-      toFrameBtn.onclick = () => {
-    localStorage.setItem("capturedPhotos", JSON.stringify(photos));
-    window.location.href = "Frame.html";
-  };
+    toFrameBtn.onclick = () => {
+      localStorage.setItem("capturedPhotos", JSON.stringify(photos));
+      window.location.href = "Frame.html";
+    };
 
-  // --- AI Gesture: Auto Photo on Hand Raise ---
-  const hands = new Hands({
-    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
-  });
-  hands.setOptions({
-    maxNumHands: 1,
-    modelComplexity: 1,
-    minDetectionConfidence: 0.7,
-    minTrackingConfidence: 0.7
-  });
+    /* FILTER CAROUSEL LOGIC */
+    const carousel = document.getElementById("filterCarousel");
+    const filterItems = document.querySelectorAll(".filter-item");
+    const prevBtn = document.getElementById("prevFilter");
+    const nextBtn = document.getElementById("nextFilter");
 
-  const videoElement = document.getElementById('camera');
-  const canvasElement = document.createElement('canvas');
-  const canvasCtx = canvasElement.getContext('2d');
+    let currentIndex = 0;
 
-  let handOpenDetected = false;
-  let gestureCooldown = false;
-
-  hands.onResults((results) => {
-    if (!results.multiHandLandmarks || results.multiHandLandmarks.length === 0) return;
-
-    const landmarks = results.multiHandLandmarks[0];
-    const wrist = landmarks[0];
-    const middleTip = landmarks[12];
-    const palmY = wrist.y - middleTip.y;
-
-    if (palmY > 0.3 && !gestureCooldown) {
-      gestureCooldown = true;
-      console.log("✋ Telapak tangan terdeteksi! Auto capture dimulai...");
-      let counter = 3;
-      countdown.textContent = counter;
-      countdown.style.display = "block";
-      const timer = setInterval(() => {
-        counter--;
-        if (counter > 0) {
-          countdown.textContent = counter;
-        } else {
-          clearInterval(timer);
-          countdown.style.display = "none";
-          takePhoto();
-          setTimeout(() => gestureCooldown = false, 3000);
-        }
-      }, 1000);
+    function applyFilter(index) {
+      filterItems.forEach(item => item.classList.remove("active"));
+      filterItems[index].classList.add("active");
+      currentFilter = filterItems[index].getAttribute("data-filter");
+      video.style.filter = currentFilter;
     }
-  });
 
-  const cameraAI = new Camera(videoElement, {
-    onFrame: async () => {
-      await hands.send({ image: videoElement });
-    },
-    width: 640,
-    height: 480
-  });
-  cameraAI.start();
-</script>
+    filterItems.forEach((item, index) => {
+      item.addEventListener("click", () => {
+        currentIndex = index;
+        applyFilter(index);
+        carousel.scrollTo({
+          left: item.offsetLeft - 40,
+          behavior: "smooth"
+        });
+      });
+    });
+
+    prevBtn.onclick = () => {
+      if (currentIndex > 0) currentIndex--;
+      applyFilter(currentIndex);
+      carousel.scrollTo({
+        left: filterItems[currentIndex].offsetLeft - 40,
+        behavior: "smooth"
+      });
+    };
+
+    nextBtn.onclick = () => {
+      if (currentIndex < filterItems.length - 1) currentIndex++;
+      applyFilter(currentIndex);
+      carousel.scrollTo({
+        left: filterItems[currentIndex].offsetLeft - 40,
+        behavior: "smooth"
+      });
+    };
+
+    let startX = 0;
+
+    carousel.addEventListener("touchstart", e => {
+      startX = e.touches[0].clientX;
+    });
+
+    carousel.addEventListener("touchend", e => {
+      let endX = e.changedTouches[0].clientX;
+      let diff = startX - endX;
+
+      if (Math.abs(diff) > 50) {
+        if (diff > 0 && currentIndex < filterItems.length - 1) {
+          currentIndex++;
+        } else if (diff < 0 && currentIndex > 0) {
+          currentIndex--;
+        }
+        applyFilter(currentIndex);
+
+        carousel.scrollTo({
+          left: filterItems[currentIndex].offsetLeft - 40,
+          behavior: "smooth"
+        });
+      }
+    });
+
+    /* AI HAND GESTURE */
+    const hands = new Hands({
+      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+    });
+    hands.setOptions({
+      maxNumHands: 1,
+      modelComplexity: 1,
+      minDetectionConfidence: 0.7,
+      minTrackingConfidence: 0.7
+    });
+
+    const videoElement = document.getElementById('camera');
+
+    let gestureCooldown = false;
+
+    hands.onResults((results) => {
+      if (!results.multiHandLandmarks || results.multiHandLandmarks.length === 0) return;
+
+      const landmarks = results.multiHandLandmarks[0];
+      const wrist = landmarks[0];
+      const middleTip = landmarks[12];
+      const palmY = wrist.y - middleTip.y;
+
+      if (palmY > 0.3 && !gestureCooldown) {
+        gestureCooldown = true;
+
+        let counter = 3;
+        countdown.textContent = counter;
+        countdown.style.display = "block";
+        const timer = setInterval(() => {
+          counter--;
+          if (counter > 0) {
+            countdown.textContent = counter;
+          } else {
+            clearInterval(timer);
+            countdown.style.display = "none";
+            takePhoto();
+            setTimeout(() => gestureCooldown = false, 3000);
+          }
+        }, 1000);
+      }
+    });
+
+    const cameraAI = new Camera(videoElement, {
+      onFrame: async () => {
+        await hands.send({ image: videoElement });
+      },
+      width: 640,
+      height: 480
+    });
+
+    cameraAI.start();
+
+  </script>
 </body>
 </html>
-
-
-
-
