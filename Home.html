@@ -266,7 +266,7 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      /* CAMERA PREFERENCES (dideklarasikan dulu agar tidak menyebabkan TDZ) */
+      /* CAMERA PREFERENCES */
       const constraints = {
         video: {
           facingMode: "user",
@@ -308,28 +308,32 @@
           const stream = await navigator.mediaDevices.getUserMedia(constraints);
           video.srcObject = stream;
           // update canvas size when metadata is available
-          video.addEventListener('loadedmetadata', () => updateCanvasSize());
+          video.addEventListener('loadedmetadata', () => {
+            updateCanvasSize();
+          });
           window.addEventListener('resize', () => updateCanvasSize());
+          window.addEventListener('orientationchange', () => setTimeout(updateCanvasSize, 200));
         } catch (err) {
           console.error('getUserMedia error', err);
           alert('Tidak bisa akses kamera: ' + (err && err.message ? err.message : err));
         }
       }
 
-      // try to start camera immediately (user will be prompted)
+      // try to start camera immediately
       startCamera();
 
-      // Jika kamu memang menyimpan status akses di localStorage, tidak apa.
-      // Tapi sekarang kita selalu mencoba startCamera() sehingga user tetap bisa memberi izin.
-
+      // New: set canvas size based on displayed element size * DPR
       function updateCanvasSize() {
-        const vw = video.videoWidth;
-        const vh = video.videoHeight;
-        if (!vw || !vh) return;
-        const MAX_WIDTH = 1600;
-        const scale = Math.min(1, MAX_WIDTH / vw);
-        canvas.width = Math.round(vw * scale);
-        canvas.height = Math.round(vh * scale);
+        const rect = video.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        // video metadata might not be ready yet
+        if (!video.videoWidth || !video.videoHeight) return;
+        // canvas size in physical pixels
+        canvas.width = Math.round(rect.width * dpr);
+        canvas.height = Math.round(rect.height * dpr);
+        // keep CSS size in sync (helps debugging)
+        canvas.style.width = rect.width + 'px';
+        canvas.style.height = rect.height + 'px';
       }
 
       timerToggle.addEventListener('change', () => {
@@ -338,47 +342,62 @@
 
       // compute visible source rect when video uses object-fit: cover
       function computeVisibleSourceRect() {
-        const videoRatio = video.videoWidth / video.videoHeight;
-        const elemRatio = video.clientWidth / video.clientHeight;
-        let sx = 0, sy = 0, sw = video.videoWidth, sh = video.videoHeight;
+        const rect = video.getBoundingClientRect();
+        const elemRatio = rect.width / rect.height;
+        const vw = video.videoWidth;
+        const vh = video.videoHeight;
+        if (!vw || !vh) return { sx: 0, sy: 0, sw: vw, sh: vh };
 
-        if (!video.videoWidth || !video.videoHeight) return { sx, sy, sw, sh };
+        const videoRatio = vw / vh;
+        let sx = 0, sy = 0, sw = vw, sh = vh;
 
         if (videoRatio > elemRatio) {
-          // crop left/right
-          const displayedVideoWidth = Math.round(video.videoHeight * elemRatio);
-          sw = displayedVideoWidth;
-          sx = Math.round((video.videoWidth - sw) / 2);
+          // video is wider -> crop left/right
+          sw = Math.round(vh * elemRatio);
+          sx = Math.round((vw - sw) / 2);
           sy = 0;
-          sh = video.videoHeight;
+          sh = vh;
         } else {
-          // crop top/bottom
-          const displayedVideoHeight = Math.round(video.videoWidth / elemRatio);
-          sh = displayedVideoHeight;
-          sy = Math.round((video.videoHeight - sh) / 2);
+          // video is taller -> crop top/bottom
+          sh = Math.round(vw / elemRatio);
+          sy = Math.round((vh - sh) / 2);
           sx = 0;
-          sw = video.videoWidth;
+          sw = vw;
         }
 
         return { sx, sy, sw, sh };
       }
 
       function takePhoto() {
+        // ensure metadata is ready
+        if (!video.videoWidth || !video.videoHeight) {
+          video.addEventListener('loadedmetadata', takePhoto, { once: true });
+          return;
+        }
+
+        // set canvas pixel size to match displayed area * DPR
         updateCanvasSize();
+
         const ctx = canvas.getContext('2d');
+        // clear and apply filter
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.filter = currentFilter || 'none';
 
         const src = computeVisibleSourceRect();
 
-        // mirror so hasil sesuai preview
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.translate(canvas.width, 0);
-        ctx.scale(-1, 1);
+        // mirror horizontally so result matches preview (preview is CSS-flipped)
+        // operate in canvas pixel coordinates
+        ctx.save();
+        ctx.setTransform(-1, 0, 0, 1, canvas.width, 0);
 
-        ctx.drawImage(video,
-          src.sx, src.sy, src.sw, src.sh,
-          0, 0, canvas.width, canvas.height
+        // draw the cropped region from the video (video pixels) into the canvas (canvas pixels)
+        ctx.drawImage(
+          video,
+          src.sx, src.sy, src.sw, src.sh,    // source rect in video pixels
+          0, 0, canvas.width, canvas.height  // destination rect in canvas pixels
         );
+
+        ctx.restore();
 
         const dataURL = canvas.toDataURL("image/png");
         photos.push(dataURL);
