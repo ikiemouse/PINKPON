@@ -53,26 +53,17 @@
       background: #fff;
       overflow: hidden;
       position: relative;
-
-      /* ensure wrapper centers its content and doesn't add unwanted padding */
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0;
-      box-sizing: border-box;
     }
 
-    /* the actual <video> fills the wrapper and is centered (force with !important to avoid overrides) */
+    /* the actual <video> fills the wrapper and is centered */
     #camera {
       display: block;
-      width: 100% !important;
-      height: 100% !important;
-      object-fit: cover !important;
-      object-position: 50% 50% !important; /* force center */
-      transform: scaleX(-1) !important;
-      -webkit-transform: scaleX(-1) !important;
-      margin: 0 !important;
-      box-sizing: border-box;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center center;
+      transform: scaleX(-1);
+      -webkit-transform: scaleX(-1);
     }
 
     #photo {
@@ -228,6 +219,28 @@
         aspect-ratio: 16/9;
       }
     }
+    /* --- Perbaikan layout khusus HP (mobile) --- */
+@media (max-width: 600px) {
+  .container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  video, canvas {
+    max-width: 95vw;       /* supaya tidak melebihi layar */
+    height: auto !important; /* anti gepeng */
+    display: block;
+    margin: 0 auto;
+  }
+
+  #preview {
+    margin-top: 10px;
+  }
+}
+
   </style>
 </head>
 <body>
@@ -275,7 +288,7 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      /* CAMERA PREFERENCES */
+      /* CAMERA PREFERENCES (dideklarasikan dulu agar tidak menyebabkan TDZ) */
       const constraints = {
         video: {
           facingMode: "user",
@@ -311,159 +324,83 @@
       let currentFilter = 'none';
       let useTimer = true;
 
-      // Force center the video element (applies CSS via JS too to avoid overrides)
-      function forceCenterVideo() {
-        if (!video) return;
-        try {
-          video.style.objectPosition = '50% 50%';
-          video.style.objectFit = 'cover';
-          video.style.transform = 'scaleX(-1)';
-          video.style.margin = '0';
-          // optional debug log:
-          // console.log('Forced objectPosition:', window.getComputedStyle(video).objectPosition);
-        } catch (e) {
-          console.warn('forceCenterVideo error', e);
-        }
-      }
-
       // start camera and handle permission errors gracefully
       async function startCamera() {
         try {
           const stream = await navigator.mediaDevices.getUserMedia(constraints);
           video.srcObject = stream;
           // update canvas size when metadata is available
-          video.addEventListener('loadedmetadata', () => {
-            forceCenterVideo();
-            updateCanvasSize();
-          });
-          window.addEventListener('resize', () => {
-            forceCenterVideo();
-            updateCanvasSize();
-          });
-          window.addEventListener('orientationchange', () => {
-            setTimeout(() => {
-              forceCenterVideo();
-              updateCanvasSize();
-            }, 200);
-          });
+          video.addEventListener('loadedmetadata', () => updateCanvasSize());
+          window.addEventListener('resize', () => updateCanvasSize());
         } catch (err) {
           console.error('getUserMedia error', err);
           alert('Tidak bisa akses kamera: ' + (err && err.message ? err.message : err));
         }
       }
 
-      // try to start camera immediately
-      forceCenterVideo();
+      // try to start camera immediately (user will be prompted)
       startCamera();
 
-      // New: set canvas size based on displayed element size * DPR
+      // Jika kamu memang menyimpan status akses di localStorage, tidak apa.
+      // Tapi sekarang kita selalu mencoba startCamera() sehingga user tetap bisa memberi izin.
+
       function updateCanvasSize() {
-        const rect = video.getBoundingClientRect();
-        const dpr = window.devicePixelRatio || 1;
-        // video metadata might not be ready yet
-        if (!video.videoWidth || !video.videoHeight) return;
-        // canvas size in physical pixels
-        canvas.width = Math.round(rect.width * dpr);
-        canvas.height = Math.round(rect.height * dpr);
-        // keep CSS size in sync (helps debugging)
-        canvas.style.width = rect.width + 'px';
-        canvas.style.height = rect.height + 'px';
+        const vw = video.videoWidth;
+        const vh = video.videoHeight;
+        if (!vw || !vh) return;
+        const MAX_WIDTH = 1600;
+        const scale = Math.min(1, MAX_WIDTH / vw);
+        canvas.width = Math.round(vw * scale);
+        canvas.height = Math.round(vh * scale);
       }
 
       timerToggle.addEventListener('change', () => {
         useTimer = timerToggle.checked;
       });
 
-      // helper: parse object-position string -> fractions 0..1
-      function parseObjectPosition(posStr) {
-        if (!posStr) posStr = '50% 50%';
-        const parts = posStr.trim().split(/\s+/);
-        let x = parts[0] || '50%';
-        let y = parts[1] || (parts[0] ? '50%' : '50%');
-
-        const kw = { left: '0%', center: '50%', right: '100%', top: '0%', bottom: '100%' };
-
-        if (kw[x]) x = kw[x];
-        if (kw[y]) y = kw[y];
-
-        const toFraction = v => {
-          if (typeof v === 'string' && v.endsWith('%')) {
-            return Math.max(0, Math.min(1, parseFloat(v) / 100));
-          }
-          const n = parseFloat(v);
-          if (isFinite(n)) return Math.max(0, Math.min(1, n));
-          return 0.5;
-        };
-
-        return { xFrac: toFraction(x), yFrac: toFraction(y) };
-      }
-
-      // compute visible source rect when video uses object-fit: cover and object-position
+      // compute visible source rect when video uses object-fit: cover
       function computeVisibleSourceRect() {
-        const rect = video.getBoundingClientRect();
-        const elemRatio = rect.width / rect.height;
-        const vw = video.videoWidth;
-        const vh = video.videoHeight;
-        if (!vw || !vh) return { sx: 0, sy: 0, sw: vw, sh: vh };
+        const videoRatio = video.videoWidth / video.videoHeight;
+        const elemRatio = video.clientWidth / video.clientHeight;
+        let sx = 0, sy = 0, sw = video.videoWidth, sh = video.videoHeight;
 
-        const videoRatio = vw / vh;
-        let sx = 0, sy = 0, sw = vw, sh = vh;
-
-        // read CSS object-position of video (computed)
-        const style = window.getComputedStyle(video);
-        const objPos = style.objectPosition || '50% 50%';
-        const pos = parseObjectPosition(objPos); // { xFrac, yFrac }
+        if (!video.videoWidth || !video.videoHeight) return { sx, sy, sw, sh };
 
         if (videoRatio > elemRatio) {
-          // video is wider -> crop left/right
-          sw = Math.round(vh * elemRatio);
-          sx = Math.round((vw - sw) * pos.xFrac); // offset based on object-position x
+          // crop left/right
+          const displayedVideoWidth = Math.round(video.videoHeight * elemRatio);
+          sw = displayedVideoWidth;
+          sx = Math.round((video.videoWidth - sw) / 2);
           sy = 0;
-          sh = vh;
+          sh = video.videoHeight;
         } else {
-          // video is taller -> crop top/bottom
-          sh = Math.round(vw / elemRatio);
-          sy = Math.round((vh - sh) * pos.yFrac); // offset based on object-position y
+          // crop top/bottom
+          const displayedVideoHeight = Math.round(video.videoWidth / elemRatio);
+          sh = displayedVideoHeight;
+          sy = Math.round((video.videoHeight - sh) / 2);
           sx = 0;
-          sw = vw;
+          sw = video.videoWidth;
         }
-
-        // clamp
-        sx = Math.max(0, Math.min(vw - sw, sx));
-        sy = Math.max(0, Math.min(vh - sh, sy));
 
         return { sx, sy, sw, sh };
       }
 
       function takePhoto() {
-        // ensure metadata is ready
-        if (!video.videoWidth || !video.videoHeight) {
-          video.addEventListener('loadedmetadata', takePhoto, { once: true });
-          return;
-        }
-
-        // set canvas pixel size to match displayed area * DPR
         updateCanvasSize();
-
         const ctx = canvas.getContext('2d');
-        // clear and apply filter
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.filter = currentFilter || 'none';
 
         const src = computeVisibleSourceRect();
 
-        // mirror horizontally so result matches preview (preview is CSS-flipped)
-        ctx.save();
-        ctx.setTransform(-1, 0, 0, 1, canvas.width, 0);
+        // mirror so hasil sesuai preview
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
 
-        // draw the cropped region from the video (video pixels) into the canvas (canvas pixels)
-        ctx.drawImage(
-          video,
-          src.sx, src.sy, src.sw, src.sh,    // source rect in video pixels
-          0, 0, canvas.width, canvas.height  // destination rect in canvas pixels
+        ctx.drawImage(video,
+          src.sx, src.sy, src.sw, src.sh,
+          0, 0, canvas.width, canvas.height
         );
-
-        ctx.restore();
 
         const dataURL = canvas.toDataURL("image/png");
         photos.push(dataURL);
@@ -593,3 +530,4 @@
   </script>
 </body>
 </html>
+
