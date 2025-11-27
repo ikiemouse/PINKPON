@@ -2,11 +2,11 @@
 <html lang="id">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>PINKPON CAM 💖</title>
   <link rel="icon" href="flower.png" type="image/png">
 
-  <!-- MediaPipe -->
+  <!-- MediaPipe (hands) -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.min.js"></script>
 
@@ -20,224 +20,234 @@
       --bg2:#fff7fb;
       --card:#fff;
       --muted:#9b6a7a;
-      --glass: rgba(255,255,255,0.85);
-      --soft-shadow: 0 10px 30px rgba(255,79,139,0.12);
-      --round: 14px;
+      --glass: rgba(255,255,255,0.95);
+      --shadow: 0 8px 30px rgba(255,79,139,0.08);
+      --round:14px;
+      --gap:12px;
     }
 
     *{box-sizing:border-box}
+    html,body{height:100%;margin:0}
     body{
-      margin:0;
-      min-height:100vh;
       font-family:'Poppins',sans-serif;
       background: linear-gradient(180deg,var(--bg1),var(--bg2));
       color:var(--pink);
+      -webkit-font-smoothing:antialiased;
       display:flex;
       justify-content:center;
-      padding:28px 18px;
-      -webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing:grayscale;
+      align-items:flex-start;
+      padding: env(safe-area-inset-top) 12px 24px env(safe-area-inset-left);
     }
 
-    .app {
+    .app{
       width:100%;
       max-width:920px;
-      text-align:center;
+      margin: 12px auto;
     }
 
+    header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      margin-bottom:8px;
+    }
     h1{
       font-family:'Baloo 2',cursive;
       margin:0;
-      font-size:clamp(1.6rem,4vw,2.6rem);
+      font-size:clamp(1.4rem,4vw,1.9rem);
       color:var(--pink);
-      letter-spacing:0.6px;
-      margin-bottom:12px;
     }
 
-    .instructions {
-      display:flex;
-      gap:12px;
-      justify-content:center;
-      margin-bottom:14px;
-      align-items:center;
-      flex-wrap:wrap;
-    }
-    .badge {
-      background: linear-gradient(90deg,var(--pink),var(--pink-2));
-      color:white;
-      padding:8px 14px;
-      border-radius:999px;
-      font-weight:700;
-      box-shadow:0 6px 22px rgba(255,79,139,0.12);
-      transform-origin:center;
-      transition: transform .28s cubic-bezier(.2,.9,.3,1), opacity .18s;
-    }
-    .badge.hand {
-      background: linear-gradient(90deg,#fff0f4,#fff4f7);
-      color:#7b2744;
-      border:1px solid rgba(255,79,139,0.06);
-      box-shadow: 0 6px 18px rgba(255,79,139,0.06);
-    }
-
-    .container {
-      margin:0 auto;
+    /* Camera card */
+    .camera-card{
+      background:var(--glass);
+      border-radius:16px;
+      box-shadow:var(--shadow);
+      padding:12px;
       display:flex;
       flex-direction:column;
-      align-items:center;
-      gap:12px;
+      gap:var(--gap);
     }
 
-    .video-wrapper {
-      width:90vw;
-      max-width:720px;
-      aspect-ratio: 16/9;
-      background: var(--card);
-      border-radius: var(--round);
-      padding:8px;
-      border: 3px solid rgba(255,80,140,0.12);
-      box-shadow: var(--soft-shadow);
-      position:relative;
+    .video-wrapper{
+      width:100%;
+      background:#fff;
+      border-radius:12px;
       overflow:hidden;
-      transition: transform .22s cubic-bezier(.2,.9,.3,1), box-shadow .22s;
+      position:relative;
+      aspect-ratio: 4/3;
+      border: 2px solid rgba(255,80,140,0.08);
     }
-    .video-wrapper:hover{ transform: translateY(-6px); box-shadow: 0 20px 46px rgba(255,79,139,0.14); }
 
-    #camera {
+    /* On wide screens keep 16:9 */
+    @media(min-width:600px){
+      .video-wrapper{ aspect-ratio: 16/9; }
+    }
+
+    #camera{
       width:100%;
       height:100%;
       object-fit:cover;
-      transform: scaleX(-1);
-      -webkit-transform: scaleX(-1);
+      transform:scaleX(-1);
+      -webkit-transform:scaleX(-1);
       display:block;
-      border-radius: calc(var(--round) - 6px);
-      transition: filter .24s ease, transform .18s ease;
-      background: #faf7fb;
+      background:#faf7fb;
     }
 
-    #countdown {
+    /* Overlays */
+    #countdown{
       position:absolute;
-      top:50%;
       left:50%;
-      transform: translate(-50%,-50%) scale(0.92);
-      font-size:4.6rem;
-      font-weight:900;
-      color:var(--pink);
-      text-shadow: 0 8px 28px rgba(255,164,189,0.22);
+      top:50%;
+      transform: translate(-50%,-50%) scale(.96);
+      width:120px;
+      height:120px;
+      border-radius:999px;
       display:flex;
       align-items:center;
       justify-content:center;
-      width:160px;
-      height:160px;
-      border-radius:999px;
-      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.6), rgba(255,255,255,0.12));
+      font-weight:800;
+      font-size:2.4rem;
+      color:var(--pink);
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), rgba(255,255,255,0.12));
       opacity:0;
-      transform-origin:center;
-      transition: opacity .18s, transform .22s cubic-bezier(.2,.9,.3,1);
+      transition:opacity .12s, transform .12s;
       pointer-events:none;
-      backdrop-filter: blur(2px);
-      border: 2px solid rgba(255,255,255,0.28);
+      box-shadow: 0 8px 24px rgba(255,80,140,0.06);
     }
-    #countdown.show{
-      opacity:1;
-      transform: translate(-50%,-50%) scale(1);
-    }
+    #countdown.show{ opacity:1; transform: translate(-50%,-50%) scale(1); }
 
-    .hand-hint {
+    .hand-hint{
       position:absolute;
-      top:12px;
-      left:12px;
-      background: rgba(255,255,255,0.9);
+      left:10px;
+      top:10px;
+      background:rgba(255,255,255,0.95);
       padding:6px 10px;
       border-radius:999px;
       font-weight:700;
-      color:#7b2744;
-      display:flex;
-      gap:8px;
-      align-items:center;
-      transform-origin:left center;
-      transition: transform .18s cubic-bezier(.2,.9,.3,1), box-shadow .18s, opacity .18s;
-      opacity:0.96;
+      color:#6b2a44;
       border:1px solid rgba(255,79,139,0.06);
+      transition: transform .12s;
     }
-    .hand-hint.detected { transform: translateX(6px) scale(1.04); box-shadow: 0 10px 30px rgba(24,194,139,0.08); }
+    .hand-hint.detected{ transform: translateX(6px) scale(1.02); box-shadow: 0 10px 26px rgba(24,194,139,0.06); }
 
-    .carousel {
+    /* Controls - sticky bottom on mobile */
+    .controls{
       display:flex;
       gap:10px;
-      overflow-x:auto;
+      justify-content:center;
+      align-items:center;
       padding:8px;
+      width:100%;
+    }
+
+    .btn{
+      background:linear-gradient(90deg,var(--pink),var(--pink-2));
+      color:white;
+      border:none;
       border-radius:999px;
-      background: rgba(255,255,255,0.9);
-      scroll-snap-type: x proximity;
-      -webkit-overflow-scrolling: touch;
-      width:70vw;
-      max-width:420px;
+      padding:10px 14px;
+      font-weight:700;
+      box-shadow:0 8px 26px rgba(255,80,140,0.08);
+      cursor:pointer;
+      min-width:44px;
     }
-    .filter-item{ padding:8px 12px; border-radius:12px; background:white; border:2px solid rgba(255,181,209,0.5); color:var(--pink); font-weight:700; cursor:pointer; white-space:nowrap; }
-    .filter-item.active{ transform: translateY(-4px); box-shadow: 0 12px 34px rgba(255,79,139,0.08); background: linear-gradient(90deg,var(--pink),var(--pink-2)); color:#fff; }
-
-    #controls { display:flex; gap:12px; margin-top:12px; justify-content:center; align-items:center; flex-wrap:wrap; }
-    button { border: none; padding:10px 18px; border-radius:12px; background: linear-gradient(90deg,var(--pink),var(--pink-2)); color:#fff; font-weight:800; cursor:pointer; box-shadow: 0 8px 28px rgba(255,79,139,0.08); }
-    button:disabled{ opacity:.5; cursor:not-allowed; box-shadow:none; }
-
-    #preview{ display:flex; gap:10px; justify-content:center; margin-top:14px; flex-wrap:wrap; }
-    .thumb { width:86px; height:86px; object-fit:cover; border-radius:10px; border:3px solid #fff; box-shadow: 0 10px 28px rgba(0,0,0,0.10); transform: translateY(8px) scale(.96); opacity:0; transition: transform .28s, opacity .22s; cursor:pointer; }
-    .thumb.show{ transform: translateY(0) scale(1); opacity:1; }
-
-    @media(min-width:980px){ .video-wrapper{ max-width:880px; aspect-ratio: 16/9; } .carousel{ max-width:560px; width:59%; }
+    .btn.secondary{
+      background:#fff;
+      color:var(--pink);
+      border:1px solid rgba(255,80,140,0.08);
     }
-    @media(max-width:420px){ .carousel{ width:92vw; max-width:92vw; } #countdown{ width:120px; height:120px; font-size:3.2rem; } .thumb{ width:68px; height:68px; } }
+    .btn:active{ transform:translateY(1px); }
 
-    .sr-only{ position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden; }
+    /* Larger touch targets on mobile */
+    @media(max-width:420px){
+      .btn{ padding:14px 18px; font-size:1rem; min-width:60px; }
+      #countdown{ width:100px; height:100px; font-size:2rem; }
+    }
+
+    /* Preview row: horizontal scroll on mobile */
+    #preview{
+      display:flex;
+      gap:10px;
+      padding:8px 4px;
+      overflow-x:auto;
+      align-items:center;
+    }
+    .thumb{
+      width:78px;
+      height:78px;
+      border-radius:10px;
+      object-fit:cover;
+      cursor:pointer;
+      border:3px solid #fff;
+      box-shadow:0 8px 20px rgba(0,0,0,0.08);
+      transform: translateY(6px); opacity:0;
+      transition: transform .22s, opacity .18s;
+    }
+    .thumb.show{ transform: translateY(0); opacity:1; }
+
+    /* small info text */
+    .info{
+      text-align:center;
+      color:#ff7aa8;
+      font-weight:600;
+      font-size:.95rem;
+      margin-top:6px;
+    }
+
+    /* minimize decorative hearts on mobile for performance */
+    .heart { display:none; }
+
+    /* layout spacing for small screens */
+    @media(max-width:520px){
+      body{ padding:12px; }
+      .camera-card{ padding:10px; border-radius:12px; }
+      .video-wrapper{ border-radius:10px; }
+    }
+
+    /* Accessibility */
+    button:focus, .filter-item:focus { outline: 3px solid rgba(255,100,150,0.14); outline-offset: 3px; }
+
   </style>
 </head>
 <body>
   <div class="app">
-    <h1>PINKPON CAM 💕</h1>
+    <header>
+      <h1>PINKPON CAM 💕</h1>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div class="info" style="display:none" id="mobileHint">Tap "Click" to start camera</div>
+      </div>
+    </header>
 
-    <div class="instructions" aria-live="polite">
-      <div class="badge" id="badgeMin">Minimal 4 photo</div>
-      <div class="badge hand" id="badgeHand">Tunjukan telapak tangan ke kamera</div>
-    </div>
-
-    <div class="container">
+    <div class="camera-card" role="region" aria-label="Kamera">
       <div class="video-wrapper" id="videoBox">
         <video id="camera" autoplay playsinline muted></video>
-
         <div id="countdown" aria-hidden="true">3</div>
+        <div class="hand-hint" id="handHint" aria-hidden="true">✋ Terdeteksi</div>
+      </div>
 
-        <div class="hand-hint" id="handHint" aria-hidden="true" style="display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;">
-          <span style="font-size:14px">✋</span>
-          <span style="font-weight:700;color:#7b2744">Terdeteksi</span>
+      <div style="display:flex;justify-content:center;margin-top:8px;gap:8px;flex-wrap:wrap">
+        <div class="filter-list" role="toolbar" aria-label="Filter">
+          <button class="filter-item btn secondary active" data-filter="none">✨</button>
+          <button class="filter-item btn secondary" data-filter="grayscale(100%)">🖤</button>
+          <button class="filter-item btn secondary" data-filter="sepia(60%)">🌻</button>
+          <button class="filter-item btn secondary" data-filter="hue-rotate(190deg) saturate(130%)">💙</button>
         </div>
       </div>
 
-      <div class="filter-wrapper" aria-hidden="false">
-        <button id="prevFilter" class="nav-btn" aria-label="Previous filter">◀</button>
-
-        <div id="filterCarousel" class="carousel" role="list">
-          <div class="filter-item active" data-filter="none" role="listitem" tabindex="0">✨ Normal</div>
-          <div class="filter-item" data-filter="grayscale(100%)" role="listitem" tabindex="0">🖤 B&W</div>
-          <div class="filter-item" data-filter="sepia(60%)" role="listitem" tabindex="0">🌻 Vintage</div>
-          <div class="filter-item" data-filter="hue-rotate(190deg) saturate(130%)" role="listitem" tabindex="0">💙 Blue</div>
-          <div class="filter-item" data-filter="contrast(110%) brightness(105%) saturate(120%)" role="listitem" tabindex="0">🌞 Bright</div>
-          <div class="filter-item" data-filter="hue-rotate(-20deg) saturate(120%) brightness(105%)" role="listitem" tabindex="0">🌸 Soft Pink</div>
-        </div>
-
-        <button id="nextFilter" class="nav-btn" aria-label="Next filter">▶</button>
-      </div>
-
-      <div id="controls">
-        <label style="display:flex;align-items:center;gap:8px;font-weight:700">
-          <input id="timerToggle" type="checkbox" checked style="transform:scale(1.1);accent-color:var(--pink)"/>
-          ⏱️ Timer
+      <div class="controls" id="controlsBar">
+        <label style="display:flex;align-items:center;gap:6px;font-weight:700;color:#7b2744">
+          <input id="timerToggle" type="checkbox" checked style="transform:scale(1.05);accent-color:var(--pink)"/> ⏱️
         </label>
 
-        <button id="capture" aria-label="Ambil foto">Click</button>
-        <button id="toFrame" disabled aria-label="Go to frame">Go to Frame</button>
+        <button class="btn" id="captureBtn" aria-label="Ambil foto">Click</button>
+        <button class="btn secondary" id="toFrameBtn" disabled aria-label="Go to frame">Frame</button>
+        <button class="btn secondary" id="clearBtn" aria-label="Hapus semua">Hapus</button>
       </div>
 
       <div id="preview" aria-live="polite" aria-label="Preview foto"></div>
+      <div style="height:4px"></div>
     </div>
   </div>
 
@@ -246,141 +256,112 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const video = document.getElementById('camera');
-      const canvas = document.createElement('canvas');
-      const captureBtn = document.getElementById('capture');
-      const toFrameBtn = document.getElementById('toFrame');
+      const captureBtn = document.getElementById('captureBtn');
+      const toFrameBtn = document.getElementById('toFrameBtn');
+      const clearBtn = document.getElementById('clearBtn');
       const preview = document.getElementById('preview');
       const countdown = document.getElementById('countdown');
-      const shutterSound = document.getElementById('shutterSound');
-      const timerToggle = document.getElementById('timerToggle');
       const handHint = document.getElementById('handHint');
-      const badgeMin = document.getElementById('badgeMin');
+      const timerToggle = document.getElementById('timerToggle');
+      const shutterSound = document.getElementById('shutterSound');
+      const filterButtons = document.querySelectorAll('.filter-item');
 
-      // load persisted photos on start (if any)
+      // persist/read photos
       let photos = [];
-      try {
-        const saved = JSON.parse(localStorage.getItem('capturedPhotos') || '[]');
-        if (Array.isArray(saved)) photos = saved.slice(); // clone
-      } catch (e) {
-        console.warn('Error reading capturedPhotos from storage', e);
-        photos = [];
-      }
+      try { photos = JSON.parse(localStorage.getItem('capturedPhotos') || '[]') || []; } catch(e){ photos = []; }
 
-      let currentFilter = 'none';
-      let useTimer = true;
+      // smaller capture target on mobile for storage/transfer efficiency
+      const MAX_CAPTURE_WIDTH_DESKTOP = 1200;
+      const MAX_CAPTURE_WIDTH_MOBILE = 900;
+      const isMobile = window.innerWidth <= 520;
+      const MAX_CAPTURE_WIDTH = isMobile ? MAX_CAPTURE_WIDTH_MOBILE : MAX_CAPTURE_WIDTH_DESKTOP;
 
-      // render preview from photos array
-      function renderPreview() {
-        preview.innerHTML = '';
-        photos.forEach((dataURL, i) => {
-          const img = document.createElement('img');
-          img.src = dataURL;
-          img.className = 'thumb';
-          img.alt = `Captured ${i+1}`;
-          img.title = 'Klik untuk hapus';
-          img.addEventListener('click', () => {
-            // remove from array and storage
-            photos.splice(i, 1);
-            try { localStorage.setItem('capturedPhotos', JSON.stringify(photos)); } catch (err) { console.warn('save failed', err); }
-            renderPreview();
-            syncUI();
-          });
-          preview.appendChild(img);
-          requestAnimationFrame(() => img.classList.add('show'));
-        });
-      }
+      // canvas for capture
+      const captureCanvas = document.createElement('canvas');
 
-      // start camera stream
-      const constraints = { video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false };
-      async function startCamera(){
+      // camera constraints
+      const constraints = { video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false };
+      let cameraStarted = false;
+
+      async function startCamera() {
+        if (cameraStarted) return;
         try {
           const stream = await navigator.mediaDevices.getUserMedia(constraints);
           video.srcObject = stream;
-          video.onloadedmetadata = () => {
-            // set base canvas size so capture has sensible resolution
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-          };
-        } catch(err){
+          cameraStarted = true;
+          // MediaPipe's Camera util will be started after video has data (see below)
+        } catch (err) {
           console.error('camera error', err);
           alert('Tidak bisa akses kamera: ' + (err && err.message ? err.message : err));
         }
       }
-      startCamera();
 
-      timerToggle.addEventListener('change', (e) => useTimer = e.target.checked);
-
-      // helper to compute visible crop when object-fit: cover is used
-      function computeVisibleSourceRect(){
-        const vw = video.videoWidth, vh = video.videoHeight;
-        const cw = video.clientWidth, ch = video.clientHeight;
-        if(!vw||!vh) return {sx:0,sy:0,sw:0,sh:0};
+      // compute visible source rect for object-fit: cover
+      function computeVisibleSourceRect(v) {
+        const vw = v.videoWidth, vh = v.videoHeight;
+        const cw = v.clientWidth, ch = v.clientHeight;
+        if (!vw || !vh) return { sx: 0, sy: 0, sw: 0, sh: 0 };
         const videoRatio = vw / vh;
         const elemRatio = cw / ch;
-        let sx=0, sy=0, sw=vw, sh=vh;
-        if(videoRatio > elemRatio){
+        let sx = 0, sy = 0, sw = vw, sh = vh;
+        if (videoRatio > elemRatio) {
           const displayedVideoWidth = Math.round(vh * elemRatio);
           sw = displayedVideoWidth;
-          sx = Math.round((vw - sw)/2);
+          sx = Math.round((vw - sw) / 2);
         } else {
           const displayedVideoHeight = Math.round(vw / elemRatio);
           sh = displayedVideoHeight;
-          sy = Math.round((vh - sh)/2);
+          sy = Math.round((vh - sh) / 2);
         }
-        return {sx,sy,sw,sh};
+        return { sx, sy, sw, sh };
       }
 
-      // persist photos safely (JPEGs recommended to avoid quota quickly)
-      function persistPhotos() {
-        try {
-          localStorage.setItem('capturedPhotos', JSON.stringify(photos));
-          console.log('saved', photos.length, 'photos to localStorage');
-        } catch (err) {
-          console.warn('LocalStorage error, trying to trim and save:', err);
-          // fallback: keep last 4 images to reduce size
-          photos = photos.slice(-4);
-          try { localStorage.setItem('capturedPhotos', JSON.stringify(photos)); }
-          catch (e) { console.error('Still failing to save to localStorage', e); alert('Gagal menyimpan foto. Coba kurangi resolusi/kompresi.'); }
-        }
-      }
+      // capture & compress as JPEG (smaller)
+      function takePhoto() {
+        const src = computeVisibleSourceRect(video);
+        if (!src.sw || !src.sh) return;
+        // cap capture width to MAX_CAPTURE_WIDTH for mobile efficiency
+        const scale = Math.min(1, MAX_CAPTURE_WIDTH / src.sw);
+        const outW = Math.round(src.sw * scale);
+        const outH = Math.round(src.sh * scale);
 
-      // take photo (capture canvas, mirror, apply filter) and save as JPEG to reduce size
-      function takePhoto(){
-        const ctx = canvas.getContext('2d');
-        const {sx,sy,sw,sh} = computeVisibleSourceRect();
-        if (!sw || !sh) {
-          console.warn('Video size not ready yet');
-          return;
-        }
-        canvas.width = sw;
-        canvas.height = sh;
-        ctx.setTransform(-1,0,0,1,sw,0); // mirror horizontally
-        ctx.filter = currentFilter || 'none';
-        ctx.drawImage(video, sx, sy, sw, sh, 0, 0, sw, sh);
-        // save as JPEG to localStorage (smaller)
-        const quality = 0.85;
-        const dataURL = canvas.toDataURL('image/jpeg', quality);
+        captureCanvas.width = outW;
+        captureCanvas.height = outH;
+        const ctx = captureCanvas.getContext('2d');
+        // mirror to match preview
+        ctx.setTransform(-1, 0, 0, 1, outW, 0);
+
+        // draw with cropping mapped to scaled output
+        // drawImage(video, sx, sy, sw, sh, 0,0,outW,outH)
+        ctx.drawImage(video, src.sx, src.sy, src.sw, src.sh, 0, 0, outW, outH);
+
+        // choose quality lower on mobile to save space
+        const quality = isMobile ? 0.75 : 0.85;
+        const dataURL = captureCanvas.toDataURL('image/jpeg', quality);
+
         photos.push(dataURL);
-        persistPhotos();
+        try { localStorage.setItem('capturedPhotos', JSON.stringify(photos)); } catch (e) {
+          console.warn('LocalStorage save failed; trimming', e);
+          photos = photos.slice(-4);
+          try { localStorage.setItem('capturedPhotos', JSON.stringify(photos)); } catch(e){ console.error(e); }
+        }
 
         shutterSound.currentTime = 0;
         shutterSound.play();
-
         renderPreview();
-        syncUI();
+        updateButtons();
       }
 
-      // countdown helper
-      function startCountdownThenCapture(sec=3){
+      // countdown
+      function startCountdown(sec = 3) {
         let counter = sec;
         countdown.textContent = counter;
         countdown.classList.add('show');
         video.style.transform = 'scaleX(-1) scale(1.02)';
         const iv = setInterval(() => {
           counter--;
-          if(counter>0){
-            countdown.textContent = counter;
-          } else {
+          if (counter > 0) countdown.textContent = counter;
+          else {
             clearInterval(iv);
             countdown.classList.remove('show');
             video.style.transform = 'scaleX(-1) scale(1)';
@@ -389,113 +370,108 @@
         }, 1000);
       }
 
-      // capture button behavior
-      captureBtn.addEventListener('click', () => {
-        if(photos.length >= 4){
-          alert('Sudah mencapai 4 foto (batas). Klik Go to Frame untuk melanjutkan atau hapus foto jika ingin ulang.');
-          return;
+      // render preview thumbnails
+      function renderPreview() {
+        preview.innerHTML = '';
+        photos.forEach((src, i) => {
+          const img = document.createElement('img');
+          img.src = src;
+          img.className = 'thumb';
+          img.alt = `Foto ${i+1}`;
+          img.title = 'Ketuk untuk hapus';
+          img.addEventListener('click', () => {
+            photos.splice(i, 1);
+            localStorage.setItem('capturedPhotos', JSON.stringify(photos));
+            renderPreview();
+            updateButtons();
+          });
+          preview.appendChild(img);
+          requestAnimationFrame(() => img.classList.add('show'));
+        });
+      }
+
+      // UI state updates
+      function updateButtons() {
+        toFrameBtn.disabled = photos.length === 0;
+        // allow proceeding with any photos, but suggest 4 in UI: (no forced limit here)
+      }
+
+      // capture button handler — ensure camera started on mobile (user gesture)
+      captureBtn.addEventListener('click', async () => {
+        if (!cameraStarted) {
+          await startCamera();
+          // wait a bit for video to provide dimensions
+          await new Promise(r => setTimeout(r, 350));
         }
-        if(useTimer) startCountdownThenCapture(3);
+        if (timerToggle.checked) startCountdown(3);
         else takePhoto();
       });
 
-      // Go to Frame: make sure storage has photos and navigate
+      // go to frame: store then navigate
       toFrameBtn.addEventListener('click', () => {
-        if(photos.length < 4){
-          alert('Perlu minimal 4 foto untuk lanjut ke Frame.');
-          return;
-        }
-        persistPhotos();
-        toFrameBtn.textContent = 'Menyimpan...';
-        // small delay to allow storage flush in some browsers
-        setTimeout(() => {
-          window.location.href = 'Frame.html';
-        }, 250);
+        if (photos.length === 0) return alert('Ambil minimal 1 foto dulu.');
+        try { localStorage.setItem('capturedPhotos', JSON.stringify(photos)); } catch(e){ console.warn(e); }
+        toFrameBtn.textContent = 'Mengarahkan...';
+        setTimeout(()=> window.location.href = 'Frame.html', 300);
       });
 
-      // UI sync
-      function syncUI(){
-        if(photos.length >= 4){
-          badgeMin.style.opacity = '0';
-          toFrameBtn.disabled = false;
-          captureBtn.disabled = true;
-        } else {
-          badgeMin.style.opacity = '1';
-          toFrameBtn.disabled = true;
-          captureBtn.disabled = false;
-        }
-      }
-
-      /* FILTER CAROUSEL */
-      const carousel = document.getElementById('filterCarousel');
-      const items = carousel.querySelectorAll('.filter-item');
-      let currentIndex = 0;
-      function applyFilter(i){
-        items.forEach(it => it.classList.remove('active'));
-        items[i].classList.add('active');
-        currentFilter = items[i].dataset.filter || 'none';
-        video.style.filter = currentFilter;
-      }
-      items.forEach((it, i) => {
-        it.addEventListener('click', () => { currentIndex = i; applyFilter(i); it.scrollIntoView({behavior:'smooth',inline:'center'}); });
-        it.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' ') { e.preventDefault(); it.click(); } });
-      });
-      document.getElementById('prevFilter').addEventListener('click', ()=> { if(currentIndex>0) currentIndex--; applyFilter(currentIndex); items[currentIndex].scrollIntoView({behavior:'smooth',inline:'center'}); });
-      document.getElementById('nextFilter').addEventListener('click', ()=> { if(currentIndex<items.length-1) currentIndex++; applyFilter(currentIndex); items[currentIndex].scrollIntoView({behavior:'smooth',inline:'center'}); });
-
-      // swipe support
-      let startX = 0;
-      carousel.addEventListener('touchstart', e => startX = e.touches[0].clientX);
-      carousel.addEventListener('touchend', e => {
-        const endX = e.changedTouches[0].clientX;
-        const diff = startX - endX;
-        if(Math.abs(diff)>40){
-          if(diff>0 && currentIndex < items.length-1) currentIndex++;
-          else if(diff<0 && currentIndex>0) currentIndex--;
-          applyFilter(currentIndex);
-          items[currentIndex].scrollIntoView({behavior:'smooth',inline:'center'});
-        }
+      // clear temporary photos in this session (and storage)
+      clearBtn.addEventListener('click', () => {
+        if (!photos.length) return alert('Belum ada foto.');
+        if (!confirm('Hapus semua foto ini?')) return;
+        photos = [];
+        localStorage.removeItem('capturedPhotos');
+        renderPreview();
+        updateButtons();
       });
 
-      /* MEDIA PIPE HANDS */
-      const hands = new Hands({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` });
-      hands.setOptions({ maxNumHands:1, modelComplexity:1, minDetectionConfidence:0.7, minTrackingConfidence:0.6 });
+      // filter buttons
+      filterButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          filterButtons.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const f = btn.dataset.filter || 'none';
+          video.style.filter = f;
+        });
+      });
+
+      // MediaPipe hands (auto-capture)
+      const hands = new Hands({ locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}` });
+      hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.7, minTrackingConfidence: 0.6 });
 
       let gestureCooldown = false;
-      hands.onResults((results) => {
+      hands.onResults(results => {
         const has = results.multiHandLandmarks && results.multiHandLandmarks.length > 0;
-        if(!has){
-          handHint.classList.remove('detected');
-          return;
-        }
+        if (!has) { handHint.classList.remove('detected'); return; }
         const lm = results.multiHandLandmarks[0];
         const wrist = lm[0], middleTip = lm[12];
         const palmY = wrist.y - middleTip.y;
-        if(palmY > 0.28 && !gestureCooldown && photos.length < 4){
+        if (palmY > 0.28 && !gestureCooldown) {
           handHint.classList.add('detected');
           gestureCooldown = true;
-          startCountdownThenCapture(3);
+          // ensure camera started (mobile)
+          startCamera().finally(() => { startCountdown(3); });
           setTimeout(()=> gestureCooldown = false, 3500);
-        } else if(palmY <= 0.28){
+        } else if (palmY <= 0.28) {
           handHint.classList.remove('detected');
         }
       });
 
-      const cameraAI = new Camera(video, { onFrame: async () => { await hands.send({ image: video }); }, width:640, height:480 });
-
-      // start mediapipe camera after video has data
+      // Hook MediaPipe Camera util when video has frames
+      const cameraAI = new Camera(video, { onFrame: async () => { await hands.send({ image: video }); }, width: 640, height: 480 });
       video.addEventListener('loadeddata', () => {
-        try { cameraAI.start(); } catch (e) { /* ignore */ }
+        try { cameraAI.start(); } catch(e){ /* ignore if already started */ }
       });
 
-      // initial render and UI
-      renderPreview();
-      syncUI();
-
-      // small hint animation
-      setTimeout(()=> {
-        badgeMin.animate([{ transform:'translateY(0)' }, { transform:'translateY(-6px)' }, { transform:'translateY(0)' }], { duration:900, easing:'ease-out' });
-      }, 600);
+      // initial: load stored photos into session array and preview
+      (function init(){
+        try {
+          const saved = JSON.parse(localStorage.getItem('capturedPhotos') || '[]');
+          if (Array.isArray(saved) && saved.length) photos = saved.slice();
+        } catch(e){ /* ignore */ }
+        renderPreview();
+        updateButtons();
+      })();
     });
   </script>
 </body>
