@@ -44,7 +44,6 @@
     button.action:disabled{background:#ddd;color:#777;cursor:not-allowed}
     .muted{font-size:0.9rem;color:#ff87b0}
     footer{margin-top:18px;color:#ff9db8;font-size:0.85rem}
-    /* orientation toggle */
     .orientRow{display:flex;gap:6px;align-items:center;justify-content:center;margin-top:8px}
     .orientBtn{padding:6px 8px;border-radius:8px;border:2px solid #ffd7e6;background:#fff;color:var(--pink);cursor:pointer}
     .orientBtn.active{background:linear-gradient(90deg,var(--pink),#ff95c5);color:#fff;border-color:var(--pink)}
@@ -112,8 +111,22 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <script>
-    // ambil foto dari localStorage
-    const stored = JSON.parse(localStorage.getItem('capturedPhotos') || '[]');
+    // Safe read from localStorage with fallback
+    function readStored() {
+      try {
+        const raw = localStorage.getItem('capturedPhotos');
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (err) {
+        console.error('Error parsing capturedPhotos from localStorage', err);
+        return [];
+      }
+    }
+
+    // initial read
+    let stored = readStored();
+
     const photoContainer = document.getElementById('photoContainer');
     const frameBtns = document.querySelectorAll('.frame-btn');
     const orientButtons = document.querySelectorAll('.orientBtn');
@@ -155,7 +168,6 @@
         cb.innerHTML = `<input type="checkbox" data-index="${i}" ${selected.has(i) ? 'checked' : ''} />`;
         wrap.appendChild(cb);
         wrap.addEventListener('click', (e) => {
-          // toggle, but enforce max selection
           const idx = Number(wrap.dataset.index);
           toggleSelect(idx, wrap);
         });
@@ -170,7 +182,6 @@
         wrapEl.classList.remove('selected');
       } else {
         if (selected.size >= slotsNeeded) {
-          // jika sudah penuh, ganti pilihan pertama yang dipilih (UX fleksibel)
           alert(`Maks ${slotsNeeded} foto untuk tipe frame ini. Kalau mau ganti, hapus pilihan terlebih dahulu.`);
           return;
         }
@@ -182,6 +193,8 @@
         const id = Number(input.dataset.index);
         input.checked = selected.has(id);
       });
+      // enable build button when selection changes
+      buildBtn.disabled = selected.size === 0;
     }
 
     // frame button handlers
@@ -199,11 +212,11 @@
       maxSlotsLabel.textContent = slotsNeeded;
       // if selected more than slots, remove extras
       if (selected.size > slotsNeeded) {
-        // keep first N
         const keep = Array.from(selected).slice(0, slotsNeeded);
         selected = new Set(keep);
-        renderThumbs();
       }
+      renderThumbs();
+      buildBtn.disabled = selected.size === 0;
     }
     frameBtns.forEach(b=>b.addEventListener('click', ()=>setFrameType(b.dataset.type)));
 
@@ -221,14 +234,10 @@
       frameColor = e.target.value;
     });
 
-    // initial render
-    renderThumbs();
-    setFrameType('polaroid');
-
     // utility: draw image cover (crop center) into box preserving aspect ratio
     function drawImageCover(img, x, y, w, h) {
-      const iw = img.naturalWidth;
-      const ih = img.naturalHeight;
+      const iw = img.naturalWidth || img.width;
+      const ih = img.naturalHeight || img.height;
       if (!iw || !ih) return;
       const scale = Math.max(w / iw, h / ih);
       const sw = w / scale;
@@ -253,16 +262,17 @@
     async function buildFrame(){
       const sel = Array.from(selected);
       if (sel.length === 0) return alert('Pilih minimal satu foto dulu ya 💗');
-      // disable action buttons while building
       buildBtn.disabled = true;
       downloadPNG.disabled = true;
       downloadPDF.disabled = true;
       printBtn.disabled = true;
       shareBtn.disabled = true;
-      // prepare images array
+
+      // prepare images array (dataURLs => Image objects)
       const imgs = await Promise.all(sel.map(i=>{
         return new Promise(res=>{
           const im = new Image();
+          im.crossOrigin = "anonymous";
           im.src = stored[i];
           im.onload = ()=>res(im);
           im.onerror = ()=>res(null);
@@ -271,55 +281,32 @@
 
       // clear canvas to white background
       ctx.clearRect(0,0,canvas.width,canvas.height);
-      // background subtle
       ctx.fillStyle = '#fff';
       ctx.fillRect(0,0,canvas.width,canvas.height);
 
-      // draw based on frame type
+      // draw based on frame type (unchanged from your logic)
       if (frameType === 'polaroid'){
-        // large image centered with polaroid border
-        // frame background (colored border around white polaroid)
         const pad = 24;
         const frameW = canvas.width - pad*2;
         const frameH = Math.round(frameW * 1.05);
         const frameX = pad;
         const frameY = 60;
-        // outer colored border
         roundRect(frameX-8, frameY-8, frameW+16, frameH+100, 20);
-        ctx.fillStyle = frameColor;
-        ctx.fill();
-        // inner white polaroid
-        roundRect(frameX, frameY, frameW, frameH+100, 14);
-        ctx.fillStyle = '#fff';
-        ctx.fill();
-
-        // image area inside polaroid (leave bottom label area)
-        const imgX = frameX + 18;
-        const imgY = frameY + 18;
-        const imgW = frameW - 36;
-        const imgH = frameH - 36;
+        ctx.fillStyle = frameColor; ctx.fill();
+        roundRect(frameX, frameY, frameW, frameH+100, 14); ctx.fillStyle = '#fff'; ctx.fill();
+        const imgX = frameX + 18, imgY = frameY + 18, imgW = frameW - 36, imgH = frameH - 36;
         drawImageCover(imgs[0], imgX, imgY, imgW, imgH);
-
-        // label
         ctx.fillStyle = '#ff4f8b';
         ctx.font = '700 22px Poppins, sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText('PINKPON CAM', canvas.width/2, frameY + frameH + 56);
       } else if (frameType === 'grid'){
-        // 2x2 grid
         const margin = 40;
         const gridW = canvas.width - margin*2;
         const cellW = Math.floor((gridW - 20)/2);
         const cellH = Math.floor((canvas.height - 220 - margin*2)/2);
-        // frame background color behind cells
-        roundRect(margin-10, 40-10, gridW+20, cellH*2 + 20 + 140, 16);
-        ctx.fillStyle = frameColor;
-        ctx.fill();
-        // inner white
-        roundRect(margin, 40, gridW, cellH*2 + 20 + 120, 12);
-        ctx.fillStyle = '#fff';
-        ctx.fill();
-
+        roundRect(margin-10, 40-10, gridW+20, cellH*2 + 20 + 140, 16); ctx.fillStyle = frameColor; ctx.fill();
+        roundRect(margin, 40, gridW, cellH*2 + 20 + 120, 12); ctx.fillStyle = '#fff'; ctx.fill();
         const positions = [
           {x: margin+10, y: 60, w: cellW, h: cellH},
           {x: margin+10 + cellW + 10, y: 60, w: cellW, h: cellH},
@@ -328,74 +315,53 @@
         ];
         imgs.slice(0,4).forEach((im, idx)=>{
           if (!im) return;
-          // draw white inner card for each
           roundRect(positions[idx].x-6, positions[idx].y-6, positions[idx].w+12, positions[idx].h+12, 12);
-          ctx.fillStyle = '#fff';
-          ctx.fill();
+          ctx.fillStyle = '#fff'; ctx.fill();
           drawImageCover(im, positions[idx].x, positions[idx].y, positions[idx].w, positions[idx].h);
         });
       } else if (frameType === 'strip'){
-        // vertical strip 4 panels centered
         const stripW = Math.min(380, canvas.width - 120);
         const x = (canvas.width - stripW)/2;
         const gap = 18;
         const totalH = (canvas.height - 180);
         const cellH = Math.floor((totalH - gap*3)/4);
-        // draw colored border area
-        roundRect(x-14, 40-10, stripW+28, cellH*4 + gap*3 + 20 + 80, 18);
-        ctx.fillStyle = frameColor;
-        ctx.fill();
-        // inner white
-        roundRect(x, 40, stripW, cellH*4 + gap*3 + 20 + 60, 12);
-        ctx.fillStyle = '#fff';
-        ctx.fill();
-
+        roundRect(x-14, 40-10, stripW+28, cellH*4 + gap*3 + 20 + 80, 18); ctx.fillStyle = frameColor; ctx.fill();
+        roundRect(x, 40, stripW, cellH*4 + gap*3 + 20 + 60, 12); ctx.fillStyle = '#fff'; ctx.fill();
         imgs.slice(0,4).forEach((im, idx)=>{
           if (!im) return;
           const y = 60 + idx*(cellH + gap);
-          // image with some padding
           drawImageCover(im, x + 12, y, stripW - 24, cellH);
         });
       } else if (frameType === 'two'){
-        // 1 frame 2 photo: horizontal or vertical based on orient
         const pad = 60;
         const areaW = canvas.width - pad*2;
         const areaH = canvas.height - 160;
-        // colored background round
-        roundRect(pad-12, 40-12, areaW+24, areaH+24, 20);
-        ctx.fillStyle = frameColor;
-        ctx.fill();
-        // inner white
-        roundRect(pad, 40, areaW, areaH, 14);
-        ctx.fillStyle = '#fff';
-        ctx.fill();
-
+        roundRect(pad-12, 40-12, areaW+24, areaH+24, 20); ctx.fillStyle = frameColor; ctx.fill();
+        roundRect(pad, 40, areaW, areaH, 14); ctx.fillStyle = '#fff'; ctx.fill();
         if (orient === 'horizontal'){
-          const w = Math.floor((areaW - 18)/2);
-          const h = areaH - 24;
+          const w = Math.floor((areaW - 18)/2); const h = areaH - 24;
           drawImageCover(imgs[0], pad+12, 52, w, h);
           drawImageCover(imgs[1] || imgs[0], pad+12 + w + 18, 52, w, h);
         } else {
-          const h = Math.floor((areaH - 18)/2);
-          const w = areaW - 24;
+          const h = Math.floor((areaH - 18)/2); const w = areaW - 24;
           drawImageCover(imgs[0], pad+12, 52, w, h);
           drawImageCover(imgs[1] || imgs[0], pad+12, 52 + h + 18, w, h);
         }
       } else if (frameType === 'noframe'){
-        // plain layout: put all selected photos tiled nicely
-        const cols = Math.min(4, selected.size);
-        const rows = Math.ceil(selected.size/cols);
+        const cols = Math.min(4, selected.size || stored.length);
+        const rows = Math.ceil((selected.size || stored.length)/cols);
         const margin = 40;
         const gridW = canvas.width - margin*2;
         const cellW = Math.floor((gridW - (cols-1)*10)/cols);
         const cellH = Math.floor((canvas.height - 160 - margin*2 - (rows-1)*10)/rows);
         let idx=0;
+        const imgsAll = imgs; // from selected
         for (let r=0;r<rows;r++){
           for (let c=0;c<cols;c++){
-            if (idx >= imgs.length) break;
+            if (idx >= imgsAll.length) break;
             const x = margin + c*(cellW + 10);
             const y = 60 + r*(cellH + 10);
-            drawImageCover(imgs[idx], x, y, cellW, cellH);
+            drawImageCover(imgsAll[idx], x, y, cellW, cellH);
             idx++;
           }
         }
@@ -427,7 +393,6 @@
     // save PDF using jsPDF
     downloadPDF.addEventListener('click', async ()=>{
       const { jsPDF } = window.jspdf;
-      // scale canvas large enough to keep quality
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({unit:'px', format:[canvas.width, canvas.height]});
       pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
@@ -444,30 +409,22 @@
       w.print();
     });
 
-    // 🌸 Share hasil foto langsung ke sosial media
-shareBtn.addEventListener('click', async () => {
-  canvas.toBlob(async (blob) => {
-    const file = new File([blob], 'pinkpon_frame.png', { type: 'image/png' });
-
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      try {
-        await navigator.share({
-          files: [file],
-          title: 'PINKPON CAM 💗',
-          text: 'Lihat hasil fotoku dari PINKPON CAM!',
-        });
-      } catch (err) {
-        console.error('Share dibatalkan:', err);
-      }
-    } else {
-      alert('Fitur share foto langsung belum didukung di browser ini 😢. Coba buka di HP ya!');
-    }
-  }, 'image/png');
-});
-
+    // Share
+    shareBtn.addEventListener('click', async () => {
+      canvas.toBlob(async (blob) => {
+        const file = new File([blob], 'pinkpon_frame.png', { type: 'image/png' });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({ files: [file], title: 'PINKPON CAM 💗', text: 'Lihat hasil fotoku dari PINKPON CAM!' });
+          } catch (err) { console.error('Share dibatalkan:', err); }
+        } else {
+          alert('Fitur share foto langsung belum didukung di browser ini. Coba buka di HP ya!');
+        }
+      }, 'image/png');
+    });
 
     // back to camera
-    backBtn.addEventListener('click', ()=>{ window.location.href='index.html' });
+    backBtn.addEventListener('click', ()=>{ window.location.href='Home.html' });
 
     // keep checkboxes in sync if user toggles input directly
     photoContainer.addEventListener('change', (e)=>{
@@ -486,6 +443,7 @@ shareBtn.addEventListener('click', async () => {
           selected.delete(idx);
           wrap.classList.remove('selected');
         }
+        buildBtn.disabled = selected.size === 0;
       }
     });
 
@@ -498,8 +456,20 @@ shareBtn.addEventListener('click', async () => {
         if (wrap) toggleSelect(idx, wrap);
       }
     });
+
+    // Watch for other tabs updating the same storage (optional)
+    window.addEventListener('storage', (ev) => {
+      if (ev.key === 'capturedPhotos') {
+        stored = readStored();
+        console.info('capturedPhotos changed via storage event — re-rendering thumbs');
+        renderThumbs();
+      }
+    });
+
+    // initial render
+    renderThumbs();
+    setFrameType('polaroid');
+    buildBtn.disabled = true;
   </script>
 </body>
 </html>
-
-
