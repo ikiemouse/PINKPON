@@ -1,533 +1,502 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.min.js"></script>
-
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>PINKPON CAM 💖</title>
   <link rel="icon" href="flower.png" type="image/png">
+
+  <!-- MediaPipe -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.min.js"></script>
+
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 
   <style>
-    :root {
-      --pink: #ff4f8b;
-      --pink-light: #ffb5d1;
-      --bg1: #ffe6f2;
-      --bg2: #fff0f8;
+    :root{
+      --pink:#ff4f8b;
+      --pink-2:#ff95c5;
+      --bg1:#fff0f6;
+      --bg2:#fff7fb;
+      --card:#fff;
+      --muted:#9b6a7a;
+      --glass: rgba(255,255,255,0.85);
+      --soft-shadow: 0 10px 30px rgba(255,79,139,0.12);
+      --round: 14px;
     }
 
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 100%);
-      color: var(--pink);
-      text-align: center;
-      padding: 20px;
-      overflow-x: hidden;
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family:'Poppins',sans-serif;
+      background: linear-gradient(180deg,var(--bg1),var(--bg2));
+      color:var(--pink);
+      display:flex;
+      justify-content:center;
+      padding:28px 18px;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
     }
 
-    h1 {
-      font-family: 'Baloo 2', cursive;
-      color: var(--pink);
-      text-shadow: 0 2px 8px #ffc8e3;
-      margin-bottom: 10px;
-      font-size: clamp(1.6rem, 5vw, 2.2rem);
+    .app {
+      width:100%;
+      max-width:920px;
+      text-align:center;
+    }
+
+    h1{
+      font-family:'Baloo 2',cursive;
+      margin:0;
+      font-size:clamp(1.6rem,4vw,2.6rem);
+      color:var(--pink);
+      letter-spacing:0.6px;
+      margin-bottom:12px;
+    }
+
+    .instructions {
+      display:flex;
+      gap:12px;
+      justify-content:center;
+      margin-bottom:14px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .badge {
+      background: linear-gradient(90deg,var(--pink),var(--pink-2));
+      color:white;
+      padding:8px 14px;
+      border-radius:999px;
+      font-weight:700;
+      box-shadow:0 6px 22px rgba(255,79,139,0.12);
+      transform-origin:center;
+      transition: transform .28s cubic-bezier(.2,.9,.3,1), opacity .18s;
+    }
+    .badge.hand {
+      background: linear-gradient(90deg,#fff0f4,#fff4f7);
+      color:#7b2744;
+      border:1px solid rgba(255,79,139,0.06);
+      box-shadow: 0 6px 18px rgba(255,79,139,0.06);
     }
 
     .container {
-      position: relative;
-      display: inline-block;
+      margin:0 auto;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:12px;
     }
 
-    /* video wrapper: maintain a stable visible area and center the video inside */
     .video-wrapper {
-      width: 90vw;
-      max-width: 420px;
-      aspect-ratio: 4/3;
-      border: 4px solid var(--pink);
-      border-radius: 18px;
-      margin: 10px;
-      box-shadow: 0 6px 32px #ff4f8b55;
-      background: #fff;
-      overflow: hidden;
-      position: relative;
+      width:90vw;
+      max-width:720px;
+      aspect-ratio: 16/9;
+      background: var(--card);
+      border-radius: var(--round);
+      padding:8px;
+      border: 3px solid rgba(255,80,140,0.12);
+      box-shadow: var(--soft-shadow);
+      position:relative;
+      overflow:hidden;
+      transition: transform .22s cubic-bezier(.2,.9,.3,1), box-shadow .22s;
     }
+    .video-wrapper:hover{ transform: translateY(-6px); box-shadow: 0 20px 46px rgba(255,79,139,0.14); }
 
-    /* the actual <video> fills the wrapper and is centered */
     #camera {
-      display: block;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      object-position: center center;
+      width:100%;
+      height:100%;
+      object-fit:cover;
       transform: scaleX(-1);
       -webkit-transform: scaleX(-1);
-    }
-
-    #photo {
-      display: none;
-      transform: scaleX(-1);
-    }
-
-    #controls {
-      margin-top: 10px;
-    }
-
-    button {
-      padding: 12px 20px;
-      margin: 6px;
-      font-size: clamp(0.9rem, 3vw, 1rem);
-      cursor: pointer;
-      border-radius: 10px;
-      border: none;
-      background: linear-gradient(90deg, #ff4f8b, #ff95c5);
-      color: #fff;
-      font-weight: bold;
-      box-shadow: 0 3px 10px #ff4f8b22;
-      transition: 0.3s;
-    }
-
-    button:hover {
-      transform: scale(1.05);
-    }
-
-    button:disabled {
-      background: #ccc;
-      cursor: not-allowed;
+      display:block;
+      border-radius: calc(var(--round) - 6px);
+      transition: filter .24s ease, transform .18s ease;
+      background: #faf7fb;
     }
 
     #countdown {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 5rem;
-      font-weight: bold;
-      color: var(--pink);
-      text-shadow: 0 4px 12px rgba(0,0,0,0.4);
-      display: none;
-      pointer-events: none;
+      position:absolute;
+      top:50%;
+      left:50%;
+      transform: translate(-50%,-50%) scale(0.92);
+      font-size:4.6rem;
+      font-weight:900;
+      color:var(--pink);
+      text-shadow: 0 8px 28px rgba(255,164,189,0.22);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      width:160px;
+      height:160px;
+      border-radius:999px;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.6), rgba(255,255,255,0.12));
+      opacity:0;
+      transform-origin:center;
+      transition: opacity .18s, transform .22s cubic-bezier(.2,.9,.3,1);
+      pointer-events:none;
+      backdrop-filter: blur(2px);
+      border: 2px solid rgba(255,255,255,0.28);
+    }
+    #countdown.show{
+      opacity:1;
+      transform: translate(-50%,-50%) scale(1);
     }
 
-    .filter-wrapper {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-top: 15px;
-      gap: 6px;
+    .hand-hint {
+      position:absolute;
+      top:12px;
+      left:12px;
+      background: rgba(255,255,255,0.9);
+      padding:6px 10px;
+      border-radius:999px;
+      font-weight:700;
+      color:#7b2744;
+      display:flex;
+      gap:8px;
+      align-items:center;
+      transform-origin:left center;
+      transition: transform .18s cubic-bezier(.2,.9,.3,1), box-shadow .18s, opacity .18s;
+      opacity:0.96;
+      border:1px solid rgba(255,79,139,0.06);
     }
-
-    .nav-btn {
-      background: var(--pink);
-      border: none;
-      color: white;
-      padding: 10px 14px;
-      font-size: 1rem;
-      border-radius: 10px;
-      cursor: pointer;
-      box-shadow: 0 3px 10px #ff4f8b55;
-    }
-
-    .nav-btn:hover {
-      transform: scale(1.1);
-    }
+    .hand-hint.detected { transform: translateX(6px) scale(1.04); box-shadow: 0 10px 30px rgba(24,194,139,0.08); }
 
     .carousel {
-      display: flex;
-      overflow-x: auto;
-      scroll-behavior: smooth;
-      gap: 10px;
-      padding: 8px;
-      width: 70vw;
-      max-width: 340px;
+      display:flex;
+      gap:10px;
+      overflow-x:auto;
+      padding:8px;
+      border-radius:999px;
+      background: rgba(255,255,255,0.9);
+      scroll-snap-type: x proximity;
+      -webkit-overflow-scrolling: touch;
+      width:70vw;
+      max-width:420px;
     }
+    .filter-item{ padding:8px 12px; border-radius:12px; background:white; border:2px solid rgba(255,181,209,0.5); color:var(--pink); font-weight:700; cursor:pointer; white-space:nowrap; }
+    .filter-item.active{ transform: translateY(-4px); box-shadow: 0 12px 34px rgba(255,79,139,0.08); background: linear-gradient(90deg,var(--pink),var(--pink-2)); color:#fff; }
 
-    .carousel::-webkit-scrollbar {
-      display: none;
+    #controls { display:flex; gap:12px; margin-top:12px; justify-content:center; align-items:center; flex-wrap:wrap; }
+    button { border: none; padding:10px 18px; border-radius:12px; background: linear-gradient(90deg,var(--pink),var(--pink-2)); color:#fff; font-weight:800; cursor:pointer; box-shadow: 0 8px 28px rgba(255,79,139,0.08); }
+    button:disabled{ opacity:.5; cursor:not-allowed; box-shadow:none; }
+
+    #preview{ display:flex; gap:10px; justify-content:center; margin-top:14px; flex-wrap:wrap; }
+    .thumb { width:86px; height:86px; object-fit:cover; border-radius:10px; border:3px solid #fff; box-shadow: 0 10px 28px rgba(0,0,0,0.10); transform: translateY(8px) scale(.96); opacity:0; transition: transform .28s, opacity .22s; cursor:pointer; }
+    .thumb.show{ transform: translateY(0) scale(1); opacity:1; }
+
+    @media(min-width:980px){ .video-wrapper{ max-width:880px; aspect-ratio: 16/9; } .carousel{ max-width:560px; width:59%; }
     }
+    @media(max-width:420px){ .carousel{ width:92vw; max-width:92vw; } #countdown{ width:120px; height:120px; font-size:3.2rem; } .thumb{ width:68px; height:68px; } }
 
-    .filter-item {
-      white-space: nowrap;
-      padding: 8px 14px;
-      background: white;
-      border-radius: 10px;
-      border: 2px solid var(--pink-light);
-      color: var(--pink);
-      cursor: pointer;
-      font-size: 0.9rem;
-      transition: 0.25s;
-    }
-
-    .filter-item.active {
-      background: linear-gradient(90deg, #ff4f8b, #ff95c5);
-      color: white;
-      border-color: #ff4f8b;
-      box-shadow: 0 2px 8px #ff8db877;
-    }
-
-    #preview {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      margin-top: 20px;
-      flex-wrap: wrap;
-    }
-
-    .thumb {
-      width: 80px;
-      height: auto;
-      object-fit: cover;
-      border: 3px solid #fff;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    }
-
-    .toggle {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 8px;
-      margin: 10px auto;
-      font-size: 1rem;
-    }
-
-    input[type="checkbox"] {
-      accent-color: #ff4f8b;
-      transform: scale(1.3);
-      cursor: pointer;
-    }
-
-    .heart {
-      position: fixed;
-      top: -10px;
-      color: #ff7aa8;
-      font-size: 18px;
-      animation: fall 6s linear forwards;
-      z-index: -1;
-    }
-
-    @keyframes fall {
-      0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-      100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
-    }
-
-    @media (min-width: 900px) {
-      .video-wrapper {
-        max-width: 640px;
-        aspect-ratio: 16/9;
-      }
-    }
-    /* --- Perbaikan layout khusus HP (mobile) --- */
-@media (max-width: 600px) {
-  .container {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-  }
-
-  video, canvas {
-    max-width: 95vw;       /* supaya tidak melebihi layar */
-    height: auto !important; /* anti gepeng */
-    display: block;
-    margin: 0 auto;
-  }
-
-  #preview {
-    margin-top: 10px;
-  }
-}
-
+    .sr-only{ position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden; }
   </style>
 </head>
 <body>
-  <h1>PINKPON CAM 💕</h1>
+  <div class="app">
+    <h1>PINKPON CAM 💕</h1>
 
-  <div class="toggle">
-    <label for="timerToggle">⏱️ Timer:</label>
-    <input type="checkbox" id="timerToggle" checked>
-  </div>
-
-  <div class="container">
-    <div class="video-wrapper">
-      <video id="camera" autoplay playsinline></video>
-      <div id="countdown">3</div>
-    </div>
-    <canvas id="photo" style="display:none;"></canvas>
-  </div>
-
-  <div class="filter-wrapper">
-    <button id="prevFilter" class="nav-btn">◀</button>
-
-    <div id="filterCarousel" class="carousel">
-      <div class="filter-item active" data-filter="none">✨ Normal</div>
-      <div class="filter-item" data-filter="grayscale(100%)">🖤 B&W</div>
-      <div class="filter-item" data-filter="sepia(60%)">🌻 Vintage</div>
-      <div class="filter-item" data-filter="hue-rotate(190deg) saturate(130%)">💙 Blue</div>
-      <div class="filter-item" data-filter="contrast(110%) brightness(105%) saturate(120%)">🌞 Bright</div>
-      <div class="filter-item" data-filter="hue-rotate(-20deg) saturate(120%) brightness(105%)">🌸 Soft Pink</div>
-      <div class="filter-item" data-filter="hue-rotate(50deg) brightness(95%) saturate(90%)">🌿 Calm</div>
-      <div class="filter-item" data-filter="contrast(130%) brightness(95%) saturate(140%)">🍓 Retro</div>
-      <div class="filter-item" data-filter="brightness(120%) blur(1px)">🌈 Dreamy</div>
+    <div class="instructions" aria-live="polite">
+      <div class="badge" id="badgeMin">Minimal 4 photo</div>
+      <div class="badge hand" id="badgeHand">Tunjukan telapak tangan ke kamera</div>
     </div>
 
-    <button id="nextFilter" class="nav-btn">▶</button>
-  </div>
+    <div class="container">
+      <div class="video-wrapper" id="videoBox">
+        <video id="camera" autoplay playsinline muted></video>
 
-  <div id="controls">
-    <button id="capture">Click</button>
-    <button id="toFrame" disabled>Go to Frame</button>
-  </div>
+        <div id="countdown" aria-hidden="true">3</div>
 
-  <div id="preview"></div>
+        <div class="hand-hint" id="handHint" aria-hidden="true" style="display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;">
+          <span style="font-size:14px">✋</span>
+          <span style="font-weight:700;color:#7b2744">Terdeteksi</span>
+        </div>
+      </div>
+
+      <div class="filter-wrapper" aria-hidden="false">
+        <button id="prevFilter" class="nav-btn" aria-label="Previous filter">◀</button>
+
+        <div id="filterCarousel" class="carousel" role="list">
+          <div class="filter-item active" data-filter="none" role="listitem" tabindex="0">✨ Normal</div>
+          <div class="filter-item" data-filter="grayscale(100%)" role="listitem" tabindex="0">🖤 B&W</div>
+          <div class="filter-item" data-filter="sepia(60%)" role="listitem" tabindex="0">🌻 Vintage</div>
+          <div class="filter-item" data-filter="hue-rotate(190deg) saturate(130%)" role="listitem" tabindex="0">💙 Blue</div>
+          <div class="filter-item" data-filter="contrast(110%) brightness(105%) saturate(120%)" role="listitem" tabindex="0">🌞 Bright</div>
+          <div class="filter-item" data-filter="hue-rotate(-20deg) saturate(120%) brightness(105%)" role="listitem" tabindex="0">🌸 Soft Pink</div>
+        </div>
+
+        <button id="nextFilter" class="nav-btn" aria-label="Next filter">▶</button>
+      </div>
+
+      <div id="controls">
+        <label style="display:flex;align-items:center;gap:8px;font-weight:700">
+          <input id="timerToggle" type="checkbox" checked style="transform:scale(1.1);accent-color:var(--pink)"/>
+          ⏱️ Timer
+        </label>
+
+        <button id="capture" aria-label="Ambil foto">Click</button>
+        <button id="toFrame" disabled aria-label="Go to frame">Go to Frame</button>
+      </div>
+
+      <div id="preview" aria-live="polite" aria-label="Preview foto"></div>
+    </div>
+  </div>
 
   <audio id="shutterSound" src="https://www.soundjay.com/mechanical/camera-shutter-click-01.mp3" preload="auto"></audio>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      /* CAMERA PREFERENCES (dideklarasikan dulu agar tidak menyebabkan TDZ) */
-      const constraints = {
-        video: {
-          facingMode: "user",
-          width: { ideal: 1280 },
-          height: { ideal: 960 }
-        },
-        audio: false
-      };
-
-      /* Falling Hearts */
-      function createHeart() {
-        const heart = document.createElement('div');
-        heart.classList.add('heart');
-        heart.innerHTML = '💖';
-        heart.style.left = Math.random() * 100 + 'vw';
-        heart.style.animationDuration = 3 + Math.random() * 3 + 's';
-        document.body.appendChild(heart);
-        setTimeout(() => heart.remove(), 6000);
-      }
-      setInterval(createHeart, 200);
-
-      /* ELEMENTS */
       const video = document.getElementById('camera');
-      const canvas = document.getElementById('photo');
+      const canvas = document.createElement('canvas');
       const captureBtn = document.getElementById('capture');
       const toFrameBtn = document.getElementById('toFrame');
       const preview = document.getElementById('preview');
       const countdown = document.getElementById('countdown');
       const shutterSound = document.getElementById('shutterSound');
       const timerToggle = document.getElementById('timerToggle');
+      const handHint = document.getElementById('handHint');
+      const badgeMin = document.getElementById('badgeMin');
 
+      // load persisted photos on start (if any)
       let photos = [];
+      try {
+        const saved = JSON.parse(localStorage.getItem('capturedPhotos') || '[]');
+        if (Array.isArray(saved)) photos = saved.slice(); // clone
+      } catch (e) {
+        console.warn('Error reading capturedPhotos from storage', e);
+        photos = [];
+      }
+
       let currentFilter = 'none';
       let useTimer = true;
 
-      // start camera and handle permission errors gracefully
-      async function startCamera() {
+      // render preview from photos array
+      function renderPreview() {
+        preview.innerHTML = '';
+        photos.forEach((dataURL, i) => {
+          const img = document.createElement('img');
+          img.src = dataURL;
+          img.className = 'thumb';
+          img.alt = `Captured ${i+1}`;
+          img.title = 'Klik untuk hapus';
+          img.addEventListener('click', () => {
+            // remove from array and storage
+            photos.splice(i, 1);
+            try { localStorage.setItem('capturedPhotos', JSON.stringify(photos)); } catch (err) { console.warn('save failed', err); }
+            renderPreview();
+            syncUI();
+          });
+          preview.appendChild(img);
+          requestAnimationFrame(() => img.classList.add('show'));
+        });
+      }
+
+      // start camera stream
+      const constraints = { video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false };
+      async function startCamera(){
         try {
           const stream = await navigator.mediaDevices.getUserMedia(constraints);
           video.srcObject = stream;
-          // update canvas size when metadata is available
-          video.addEventListener('loadedmetadata', () => updateCanvasSize());
-          window.addEventListener('resize', () => updateCanvasSize());
-        } catch (err) {
-          console.error('getUserMedia error', err);
+          video.onloadedmetadata = () => {
+            // set base canvas size so capture has sensible resolution
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+          };
+        } catch(err){
+          console.error('camera error', err);
           alert('Tidak bisa akses kamera: ' + (err && err.message ? err.message : err));
         }
       }
-
-      // try to start camera immediately (user will be prompted)
       startCamera();
 
-      // Jika kamu memang menyimpan status akses di localStorage, tidak apa.
-      // Tapi sekarang kita selalu mencoba startCamera() sehingga user tetap bisa memberi izin.
+      timerToggle.addEventListener('change', (e) => useTimer = e.target.checked);
 
-      function updateCanvasSize() {
-        const vw = video.videoWidth;
-        const vh = video.videoHeight;
-        if (!vw || !vh) return;
-        const MAX_WIDTH = 1600;
-        const scale = Math.min(1, MAX_WIDTH / vw);
-        canvas.width = Math.round(vw * scale);
-        canvas.height = Math.round(vh * scale);
-      }
-
-      timerToggle.addEventListener('change', () => {
-        useTimer = timerToggle.checked;
-      });
-
-      // compute visible source rect when video uses object-fit: cover
-      function computeVisibleSourceRect() {
-        const videoRatio = video.videoWidth / video.videoHeight;
-        const elemRatio = video.clientWidth / video.clientHeight;
-        let sx = 0, sy = 0, sw = video.videoWidth, sh = video.videoHeight;
-
-        if (!video.videoWidth || !video.videoHeight) return { sx, sy, sw, sh };
-
-        if (videoRatio > elemRatio) {
-          // crop left/right
-          const displayedVideoWidth = Math.round(video.videoHeight * elemRatio);
+      // helper to compute visible crop when object-fit: cover is used
+      function computeVisibleSourceRect(){
+        const vw = video.videoWidth, vh = video.videoHeight;
+        const cw = video.clientWidth, ch = video.clientHeight;
+        if(!vw||!vh) return {sx:0,sy:0,sw:0,sh:0};
+        const videoRatio = vw / vh;
+        const elemRatio = cw / ch;
+        let sx=0, sy=0, sw=vw, sh=vh;
+        if(videoRatio > elemRatio){
+          const displayedVideoWidth = Math.round(vh * elemRatio);
           sw = displayedVideoWidth;
-          sx = Math.round((video.videoWidth - sw) / 2);
-          sy = 0;
-          sh = video.videoHeight;
+          sx = Math.round((vw - sw)/2);
         } else {
-          // crop top/bottom
-          const displayedVideoHeight = Math.round(video.videoWidth / elemRatio);
+          const displayedVideoHeight = Math.round(vw / elemRatio);
           sh = displayedVideoHeight;
-          sy = Math.round((video.videoHeight - sh) / 2);
-          sx = 0;
-          sw = video.videoWidth;
+          sy = Math.round((vh - sh)/2);
         }
-
-        return { sx, sy, sw, sh };
+        return {sx,sy,sw,sh};
       }
 
-      function takePhoto() {
-        updateCanvasSize();
+      // persist photos safely (JPEGs recommended to avoid quota quickly)
+      function persistPhotos() {
+        try {
+          localStorage.setItem('capturedPhotos', JSON.stringify(photos));
+          console.log('saved', photos.length, 'photos to localStorage');
+        } catch (err) {
+          console.warn('LocalStorage error, trying to trim and save:', err);
+          // fallback: keep last 4 images to reduce size
+          photos = photos.slice(-4);
+          try { localStorage.setItem('capturedPhotos', JSON.stringify(photos)); }
+          catch (e) { console.error('Still failing to save to localStorage', e); alert('Gagal menyimpan foto. Coba kurangi resolusi/kompresi.'); }
+        }
+      }
+
+      // take photo (capture canvas, mirror, apply filter) and save as JPEG to reduce size
+      function takePhoto(){
         const ctx = canvas.getContext('2d');
+        const {sx,sy,sw,sh} = computeVisibleSourceRect();
+        if (!sw || !sh) {
+          console.warn('Video size not ready yet');
+          return;
+        }
+        canvas.width = sw;
+        canvas.height = sh;
+        ctx.setTransform(-1,0,0,1,sw,0); // mirror horizontally
         ctx.filter = currentFilter || 'none';
-
-        const src = computeVisibleSourceRect();
-
-        // mirror so hasil sesuai preview
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.translate(canvas.width, 0);
-        ctx.scale(-1, 1);
-
-        ctx.drawImage(video,
-          src.sx, src.sy, src.sw, src.sh,
-          0, 0, canvas.width, canvas.height
-        );
-
-        const dataURL = canvas.toDataURL("image/png");
+        ctx.drawImage(video, sx, sy, sw, sh, 0, 0, sw, sh);
+        // save as JPEG to localStorage (smaller)
+        const quality = 0.85;
+        const dataURL = canvas.toDataURL('image/jpeg', quality);
         photos.push(dataURL);
+        persistPhotos();
+
         shutterSound.currentTime = 0;
         shutterSound.play();
 
-        const img = document.createElement("img");
-        img.src = dataURL;
-        img.className = "thumb";
-        preview.appendChild(img);
+        renderPreview();
+        syncUI();
+      }
 
-        if (photos.length === 4) {
+      // countdown helper
+      function startCountdownThenCapture(sec=3){
+        let counter = sec;
+        countdown.textContent = counter;
+        countdown.classList.add('show');
+        video.style.transform = 'scaleX(-1) scale(1.02)';
+        const iv = setInterval(() => {
+          counter--;
+          if(counter>0){
+            countdown.textContent = counter;
+          } else {
+            clearInterval(iv);
+            countdown.classList.remove('show');
+            video.style.transform = 'scaleX(-1) scale(1)';
+            takePhoto();
+          }
+        }, 1000);
+      }
+
+      // capture button behavior
+      captureBtn.addEventListener('click', () => {
+        if(photos.length >= 4){
+          alert('Sudah mencapai 4 foto (batas). Klik Go to Frame untuk melanjutkan atau hapus foto jika ingin ulang.');
+          return;
+        }
+        if(useTimer) startCountdownThenCapture(3);
+        else takePhoto();
+      });
+
+      // Go to Frame: make sure storage has photos and navigate
+      toFrameBtn.addEventListener('click', () => {
+        if(photos.length < 4){
+          alert('Perlu minimal 4 foto untuk lanjut ke Frame.');
+          return;
+        }
+        persistPhotos();
+        toFrameBtn.textContent = 'Menyimpan...';
+        // small delay to allow storage flush in some browsers
+        setTimeout(() => {
+          window.location.href = 'Frame.html';
+        }, 250);
+      });
+
+      // UI sync
+      function syncUI(){
+        if(photos.length >= 4){
+          badgeMin.style.opacity = '0';
           toFrameBtn.disabled = false;
           captureBtn.disabled = true;
+        } else {
+          badgeMin.style.opacity = '1';
+          toFrameBtn.disabled = true;
+          captureBtn.disabled = false;
         }
       }
 
-      captureBtn.onclick = () => {
-        if (photos.length >= 4) return;
-        if (useTimer) {
-          let counter = 3;
-          countdown.textContent = counter;
-          countdown.style.display = "block";
-          const interval = setInterval(() => {
-            counter--;
-            if (counter > 0) {
-              countdown.textContent = counter;
-            } else {
-              clearInterval(interval);
-              countdown.style.display = "none";
-              takePhoto();
-            }
-          }, 1000);
-        } else {
-          takePhoto();
-        }
-      };
-
-      toFrameBtn.onclick = () => {
-        localStorage.setItem("capturedPhotos", JSON.stringify(photos));
-        window.location.href = "Frame.html";
-      };
-
-      /* FILTER CAROUSEL LOGIC */
-      const carousel = document.getElementById("filterCarousel");
-      const filterItems = document.querySelectorAll(".filter-item");
-      const prevBtn = document.getElementById("prevFilter");
-      const nextBtn = document.getElementById("nextFilter");
+      /* FILTER CAROUSEL */
+      const carousel = document.getElementById('filterCarousel');
+      const items = carousel.querySelectorAll('.filter-item');
       let currentIndex = 0;
-
-      function applyFilter(index) {
-        filterItems.forEach(item => item.classList.remove("active"));
-        filterItems[index].classList.add("active");
-        currentFilter = filterItems[index].getAttribute("data-filter");
+      function applyFilter(i){
+        items.forEach(it => it.classList.remove('active'));
+        items[i].classList.add('active');
+        currentFilter = items[i].dataset.filter || 'none';
         video.style.filter = currentFilter;
       }
-
-      filterItems.forEach((item, index) => {
-        item.addEventListener("click", () => {
-          currentIndex = index;
-          applyFilter(index);
-          carousel.scrollTo({ left: item.offsetLeft - 40, behavior: "smooth" });
-        });
+      items.forEach((it, i) => {
+        it.addEventListener('click', () => { currentIndex = i; applyFilter(i); it.scrollIntoView({behavior:'smooth',inline:'center'}); });
+        it.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' ') { e.preventDefault(); it.click(); } });
       });
+      document.getElementById('prevFilter').addEventListener('click', ()=> { if(currentIndex>0) currentIndex--; applyFilter(currentIndex); items[currentIndex].scrollIntoView({behavior:'smooth',inline:'center'}); });
+      document.getElementById('nextFilter').addEventListener('click', ()=> { if(currentIndex<items.length-1) currentIndex++; applyFilter(currentIndex); items[currentIndex].scrollIntoView({behavior:'smooth',inline:'center'}); });
 
-      prevBtn.onclick = () => {
-        if (currentIndex > 0) currentIndex--;
-        applyFilter(currentIndex);
-        carousel.scrollTo({ left: filterItems[currentIndex].offsetLeft - 40, behavior: "smooth" });
-      };
-
-      nextBtn.onclick = () => {
-        if (currentIndex < filterItems.length - 1) currentIndex++;
-        applyFilter(currentIndex);
-        carousel.scrollTo({ left: filterItems[currentIndex].offsetLeft - 40, behavior: "smooth" });
-      };
-
+      // swipe support
       let startX = 0;
-      carousel.addEventListener("touchstart", e => startX = e.touches[0].clientX);
-      carousel.addEventListener("touchend", e => {
-        let endX = e.changedTouches[0].clientX;
-        let diff = startX - endX;
-        if (Math.abs(diff) > 50) {
-          if (diff > 0 && currentIndex < filterItems.length - 1) currentIndex++;
-          else if (diff < 0 && currentIndex > 0) currentIndex--;
+      carousel.addEventListener('touchstart', e => startX = e.touches[0].clientX);
+      carousel.addEventListener('touchend', e => {
+        const endX = e.changedTouches[0].clientX;
+        const diff = startX - endX;
+        if(Math.abs(diff)>40){
+          if(diff>0 && currentIndex < items.length-1) currentIndex++;
+          else if(diff<0 && currentIndex>0) currentIndex--;
           applyFilter(currentIndex);
-          carousel.scrollTo({ left: filterItems[currentIndex].offsetLeft - 40, behavior: "smooth" });
+          items[currentIndex].scrollIntoView({behavior:'smooth',inline:'center'});
         }
       });
 
-      /* AI HAND GESTURE (MediaPipe Hands) */
+      /* MEDIA PIPE HANDS */
       const hands = new Hands({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` });
-      hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.7, minTrackingConfidence: 0.7 });
+      hands.setOptions({ maxNumHands:1, modelComplexity:1, minDetectionConfidence:0.7, minTrackingConfidence:0.6 });
 
       let gestureCooldown = false;
       hands.onResults((results) => {
-        if (!results.multiHandLandmarks || results.multiHandLandmarks.length === 0) return;
-        const landmarks = results.multiHandLandmarks[0];
-        const wrist = landmarks[0];
-        const middleTip = landmarks[12];
+        const has = results.multiHandLandmarks && results.multiHandLandmarks.length > 0;
+        if(!has){
+          handHint.classList.remove('detected');
+          return;
+        }
+        const lm = results.multiHandLandmarks[0];
+        const wrist = lm[0], middleTip = lm[12];
         const palmY = wrist.y - middleTip.y;
-        if (palmY > 0.3 && !gestureCooldown) {
+        if(palmY > 0.28 && !gestureCooldown && photos.length < 4){
+          handHint.classList.add('detected');
           gestureCooldown = true;
-          let counter = 3;
-          countdown.textContent = counter;
-          countdown.style.display = "block";
-          const timer = setInterval(() => {
-            counter--;
-            if (counter > 0) countdown.textContent = counter;
-            else {
-              clearInterval(timer);
-              countdown.style.display = "none";
-              takePhoto();
-              setTimeout(() => gestureCooldown = false, 3000);
-            }
-          }, 1000);
+          startCountdownThenCapture(3);
+          setTimeout(()=> gestureCooldown = false, 3500);
+        } else if(palmY <= 0.28){
+          handHint.classList.remove('detected');
         }
       });
 
-      const cameraAI = new Camera(video, {
-        onFrame: async () => { await hands.send({ image: video }); },
-        width: 640,
-        height: 480
+      const cameraAI = new Camera(video, { onFrame: async () => { await hands.send({ image: video }); }, width:640, height:480 });
+
+      // start mediapipe camera after video has data
+      video.addEventListener('loadeddata', () => {
+        try { cameraAI.start(); } catch (e) { /* ignore */ }
       });
-      cameraAI.start();
+
+      // initial render and UI
+      renderPreview();
+      syncUI();
+
+      // small hint animation
+      setTimeout(()=> {
+        badgeMin.animate([{ transform:'translateY(0)' }, { transform:'translateY(-6px)' }, { transform:'translateY(0)' }], { duration:900, easing:'ease-out' });
+      }, 600);
     });
   </script>
 </body>
 </html>
-
