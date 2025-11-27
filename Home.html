@@ -19,13 +19,11 @@
       --bg1:#fff0f6;
       --bg2:#fff7fb;
       --card:#fff;
-      --muted:#9b6a7a;
       --glass: rgba(255,255,255,0.95);
       --shadow: 0 8px 30px rgba(255,79,139,0.08);
       --round:14px;
       --gap:12px;
     }
-
     *{box-sizing:border-box}
     html,body{height:100%;margin:0}
     body{
@@ -38,185 +36,35 @@
       align-items:flex-start;
       padding: env(safe-area-inset-top) 12px 24px env(safe-area-inset-left);
     }
-
-    .app{
-      width:100%;
-      max-width:920px;
-      margin: 12px auto;
-    }
-
-    header{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:8px;
-      margin-bottom:8px;
-    }
-    h1{
-      font-family:'Baloo 2',cursive;
-      margin:0;
-      font-size:clamp(1.4rem,4vw,1.9rem);
-      color:var(--pink);
-    }
-
-    /* Camera card */
-    .camera-card{
-      background:var(--glass);
-      border-radius:16px;
-      box-shadow:var(--shadow);
-      padding:12px;
-      display:flex;
-      flex-direction:column;
-      gap:var(--gap);
-    }
-
-    .video-wrapper{
-      width:100%;
-      background:#fff;
-      border-radius:12px;
-      overflow:hidden;
-      position:relative;
-      aspect-ratio: 4/3;
-      border: 2px solid rgba(255,80,140,0.08);
-    }
-
-    /* On wide screens keep 16:9 */
-    @media(min-width:600px){
-      .video-wrapper{ aspect-ratio: 16/9; }
-    }
-
-    #camera{
-      width:100%;
-      height:100%;
-      object-fit:cover;
-      transform:scaleX(-1);
-      -webkit-transform:scaleX(-1);
-      display:block;
-      background:#faf7fb;
-    }
-
-    /* Overlays */
-    #countdown{
-      position:absolute;
-      left:50%;
-      top:50%;
-      transform: translate(-50%,-50%) scale(.96);
-      width:120px;
-      height:120px;
-      border-radius:999px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-weight:800;
-      font-size:2.4rem;
-      color:var(--pink);
-      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), rgba(255,255,255,0.12));
-      opacity:0;
-      transition:opacity .12s, transform .12s;
-      pointer-events:none;
-      box-shadow: 0 8px 24px rgba(255,80,140,0.06);
-    }
-    #countdown.show{ opacity:1; transform: translate(-50%,-50%) scale(1); }
-
-    .hand-hint{
-      position:absolute;
-      left:10px;
-      top:10px;
-      background:rgba(255,255,255,0.95);
-      padding:6px 10px;
-      border-radius:999px;
-      font-weight:700;
-      color:#6b2a44;
-      border:1px solid rgba(255,79,139,0.06);
-      transition: transform .12s;
-    }
+    .app{ width:100%; max-width:920px; margin: 12px auto; }
+    h1{ font-family:'Baloo 2',cursive; margin:0; font-size:clamp(1.4rem,4vw,1.9rem); color:var(--pink); }
+    .camera-card{ background:var(--glass); border-radius:16px; box-shadow:var(--shadow); padding:12px; display:flex; flex-direction:column; gap:var(--gap); }
+    .video-wrapper{ width:100%; background:#fff; border-radius:12px; overflow:hidden; position:relative; aspect-ratio: 4/3; border: 2px solid rgba(255,80,140,0.08); }
+    @media(min-width:600px){ .video-wrapper{ aspect-ratio: 16/9; } }
+    #camera{ width:100%; height:100%; object-fit:cover; transform:scaleX(-1); -webkit-transform:scaleX(-1); display:block; background:#faf7fb; }
+    #countdown{ position:absolute; left:50%; top:50%; transform: translate(-50%,-50%); width:120px; height:120px; border-radius:999px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:2.4rem; color:var(--pink); background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), rgba(255,255,255,0.14)); opacity:0; transition:opacity .12s; pointer-events:none; box-shadow: 0 8px 24px rgba(255,80,140,0.06); }
+    #countdown.show{ opacity:1; }
+    .hand-hint{ position:absolute; left:10px; top:10px; background:rgba(255,255,255,0.95); padding:6px 10px; border-radius:999px; font-weight:700; color:#6b2a44; border:1px solid rgba(255,79,139,0.06); transition: transform .12s; }
     .hand-hint.detected{ transform: translateX(6px) scale(1.02); box-shadow: 0 10px 26px rgba(24,194,139,0.06); }
-
-    /* Controls - sticky bottom on mobile */
-    .controls{
-      display:flex;
-      gap:10px;
-      justify-content:center;
-      align-items:center;
-      padding:8px;
-      width:100%;
-    }
-
-    .btn{
-      background:linear-gradient(90deg,var(--pink),var(--pink-2));
-      color:white;
-      border:none;
-      border-radius:999px;
-      padding:10px 14px;
-      font-weight:700;
-      box-shadow:0 8px 26px rgba(255,80,140,0.08);
-      cursor:pointer;
-      min-width:44px;
-    }
-    .btn.secondary{
-      background:#fff;
-      color:var(--pink);
-      border:1px solid rgba(255,80,140,0.08);
-    }
-    .btn:active{ transform:translateY(1px); }
-
-    /* Larger touch targets on mobile */
-    @media(max-width:420px){
-      .btn{ padding:14px 18px; font-size:1rem; min-width:60px; }
-      #countdown{ width:100px; height:100px; font-size:2rem; }
-    }
-
-    /* Preview row: horizontal scroll on mobile */
-    #preview{
-      display:flex;
-      gap:10px;
-      padding:8px 4px;
-      overflow-x:auto;
-      align-items:center;
-    }
-    .thumb{
-      width:78px;
-      height:78px;
-      border-radius:10px;
-      object-fit:cover;
-      cursor:pointer;
-      border:3px solid #fff;
-      box-shadow:0 8px 20px rgba(0,0,0,0.08);
-      transform: translateY(6px); opacity:0;
-      transition: transform .22s, opacity .18s;
-    }
+    .controls{ display:flex; gap:10px; justify-content:center; align-items:center; padding:8px; width:100%; }
+    .btn{ background:linear-gradient(90deg,var(--pink),var(--pink-2)); color:white; border:none; border-radius:999px; padding:10px 14px; font-weight:700; box-shadow:0 8px 26px rgba(255,80,140,0.08); cursor:pointer; min-width:44px; }
+    .btn.secondary{ background:#fff; color:var(--pink); border:1px solid rgba(255,80,140,0.08); }
+    @media(max-width:420px){ .btn{ padding:14px 18px; font-size:1rem; min-width:60px; } #countdown{ width:100px; height:100px; font-size:2rem; } }
+    #preview{ display:flex; gap:10px; padding:8px 4px; overflow-x:auto; align-items:center; }
+    .thumb{ width:78px; height:78px; border-radius:10px; object-fit:cover; cursor:pointer; border:3px solid #fff; box-shadow:0 8px 20px rgba(0,0,0,0.08); transform: translateY(6px); opacity:0; transition: transform .22s, opacity .18s; }
     .thumb.show{ transform: translateY(0); opacity:1; }
-
-    /* small info text */
-    .info{
-      text-align:center;
-      color:#ff7aa8;
-      font-weight:600;
-      font-size:.95rem;
-      margin-top:6px;
-    }
-
-    /* minimize decorative hearts on mobile for performance */
-    .heart { display:none; }
-
-    /* layout spacing for small screens */
-    @media(max-width:520px){
-      body{ padding:12px; }
-      .camera-card{ padding:10px; border-radius:12px; }
-      .video-wrapper{ border-radius:10px; }
-    }
-
-    /* Accessibility */
+    .info{ text-align:center; color:#ff7aa8; font-weight:600; font-size:.95rem; margin-top:6px; }
+    .heart { display:none; } /* disable decorative hearts on small screens for perf */
+    @media(max-width:520px){ body{ padding:12px; } .camera-card{ padding:10px; border-radius:12px; } .video-wrapper{ border-radius:10px; } }
     button:focus, .filter-item:focus { outline: 3px solid rgba(255,100,150,0.14); outline-offset: 3px; }
-
   </style>
 </head>
 <body>
   <div class="app">
-    <header>
+    <header style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
       <h1>PINKPON CAM 💕</h1>
       <div style="display:flex;gap:8px;align-items:center">
-        <div class="info" style="display:none" id="mobileHint">Tap "Click" to start camera</div>
+        <div class="info" id="mobileHint" style="display:none">Tap "Click" to start</div>
       </div>
     </header>
 
@@ -229,7 +77,7 @@
 
       <div style="display:flex;justify-content:center;margin-top:8px;gap:8px;flex-wrap:wrap">
         <div class="filter-list" role="toolbar" aria-label="Filter">
-          <button class="filter-item btn secondary active" data-filter="none">✨</button>
+          <button class="filter-item btn secondary active" data-filter="none" aria-pressed="true">✨</button>
           <button class="filter-item btn secondary" data-filter="grayscale(100%)">🖤</button>
           <button class="filter-item btn secondary" data-filter="sepia(60%)">🌻</button>
           <button class="filter-item btn secondary" data-filter="hue-rotate(190deg) saturate(130%)">💙</button>
@@ -266,37 +114,46 @@
       const shutterSound = document.getElementById('shutterSound');
       const filterButtons = document.querySelectorAll('.filter-item');
 
-      // persist/read photos
+      // persisted photos
       let photos = [];
       try { photos = JSON.parse(localStorage.getItem('capturedPhotos') || '[]') || []; } catch(e){ photos = []; }
 
-      // smaller capture target on mobile for storage/transfer efficiency
       const MAX_CAPTURE_WIDTH_DESKTOP = 1200;
       const MAX_CAPTURE_WIDTH_MOBILE = 900;
       const isMobile = window.innerWidth <= 520;
       const MAX_CAPTURE_WIDTH = isMobile ? MAX_CAPTURE_WIDTH_MOBILE : MAX_CAPTURE_WIDTH_DESKTOP;
 
-      // canvas for capture
       const captureCanvas = document.createElement('canvas');
 
-      // camera constraints
       const constraints = { video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false };
+
+      // guards to prevent multiple starts
       let cameraStarted = false;
+      let mediapipeStarted = false;
+      let cameraStream = null;
 
       async function startCamera() {
         if (cameraStarted) return;
         try {
-          const stream = await navigator.mediaDevices.getUserMedia(constraints);
-          video.srcObject = stream;
+          cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+          video.srcObject = cameraStream;
           cameraStarted = true;
-          // MediaPipe's Camera util will be started after video has data (see below)
+          // ensure video has enough frames before starting mediapipe
+          await new Promise((resolve) => {
+            const onPlay = () => { video.removeEventListener('playing', onPlay); resolve(); };
+            video.addEventListener('playing', onPlay);
+            // fallback if 'playing' never fires quickly
+            setTimeout(resolve, 800);
+          });
+          // start mediapipe camera util once
+          startMediapipeIfNeeded();
         } catch (err) {
-          console.error('camera error', err);
+          console.error('getUserMedia error', err);
           alert('Tidak bisa akses kamera: ' + (err && err.message ? err.message : err));
         }
       }
 
-      // compute visible source rect for object-fit: cover
+      // compute visible rect (same as before)
       function computeVisibleSourceRect(v) {
         const vw = v.videoWidth, vh = v.videoHeight;
         const cw = v.clientWidth, ch = v.clientHeight;
@@ -316,61 +173,51 @@
         return { sx, sy, sw, sh };
       }
 
-      // capture & compress as JPEG (smaller)
       function takePhoto() {
         const src = computeVisibleSourceRect(video);
         if (!src.sw || !src.sh) return;
-        // cap capture width to MAX_CAPTURE_WIDTH for mobile efficiency
         const scale = Math.min(1, MAX_CAPTURE_WIDTH / src.sw);
         const outW = Math.round(src.sw * scale);
         const outH = Math.round(src.sh * scale);
-
         captureCanvas.width = outW;
         captureCanvas.height = outH;
         const ctx = captureCanvas.getContext('2d');
-        // mirror to match preview
-        ctx.setTransform(-1, 0, 0, 1, outW, 0);
-
-        // draw with cropping mapped to scaled output
-        // drawImage(video, sx, sy, sw, sh, 0,0,outW,outH)
+        ctx.setTransform(-1, 0, 0, 1, outW, 0); // mirror
         ctx.drawImage(video, src.sx, src.sy, src.sw, src.sh, 0, 0, outW, outH);
-
-        // choose quality lower on mobile to save space
         const quality = isMobile ? 0.75 : 0.85;
         const dataURL = captureCanvas.toDataURL('image/jpeg', quality);
-
         photos.push(dataURL);
         try { localStorage.setItem('capturedPhotos', JSON.stringify(photos)); } catch (e) {
           console.warn('LocalStorage save failed; trimming', e);
           photos = photos.slice(-4);
           try { localStorage.setItem('capturedPhotos', JSON.stringify(photos)); } catch(e){ console.error(e); }
         }
-
         shutterSound.currentTime = 0;
         shutterSound.play();
         renderPreview();
         updateButtons();
       }
 
-      // countdown
+      // countdown overlay (no transform on video to avoid flicker)
+      let countdownTimer = null;
       function startCountdown(sec = 3) {
+        if (countdownTimer) return;
         let counter = sec;
         countdown.textContent = counter;
         countdown.classList.add('show');
-        video.style.transform = 'scaleX(-1) scale(1.02)';
-        const iv = setInterval(() => {
+        countdownTimer = setInterval(() => {
           counter--;
-          if (counter > 0) countdown.textContent = counter;
-          else {
-            clearInterval(iv);
+          if (counter > 0) {
+            countdown.textContent = counter;
+          } else {
+            clearInterval(countdownTimer);
+            countdownTimer = null;
             countdown.classList.remove('show');
-            video.style.transform = 'scaleX(-1) scale(1)';
             takePhoto();
           }
         }, 1000);
       }
 
-      // render preview thumbnails
       function renderPreview() {
         preview.innerHTML = '';
         photos.forEach((src, i) => {
@@ -381,7 +228,7 @@
           img.title = 'Ketuk untuk hapus';
           img.addEventListener('click', () => {
             photos.splice(i, 1);
-            localStorage.setItem('capturedPhotos', JSON.stringify(photos));
+            try { localStorage.setItem('capturedPhotos', JSON.stringify(photos)); } catch(e){ console.warn(e); }
             renderPreview();
             updateButtons();
           });
@@ -390,24 +237,20 @@
         });
       }
 
-      // UI state updates
       function updateButtons() {
         toFrameBtn.disabled = photos.length === 0;
-        // allow proceeding with any photos, but suggest 4 in UI: (no forced limit here)
       }
 
-      // capture button handler — ensure camera started on mobile (user gesture)
       captureBtn.addEventListener('click', async () => {
         if (!cameraStarted) {
           await startCamera();
-          // wait a bit for video to provide dimensions
-          await new Promise(r => setTimeout(r, 350));
+          // small delay to let stream settle
+          await new Promise(r => setTimeout(r, 250));
         }
         if (timerToggle.checked) startCountdown(3);
         else takePhoto();
       });
 
-      // go to frame: store then navigate
       toFrameBtn.addEventListener('click', () => {
         if (photos.length === 0) return alert('Ambil minimal 1 foto dulu.');
         try { localStorage.setItem('capturedPhotos', JSON.stringify(photos)); } catch(e){ console.warn(e); }
@@ -415,7 +258,6 @@
         setTimeout(()=> window.location.href = 'Frame.html', 300);
       });
 
-      // clear temporary photos in this session (and storage)
       clearBtn.addEventListener('click', () => {
         if (!photos.length) return alert('Belum ada foto.');
         if (!confirm('Hapus semua foto ini?')) return;
@@ -425,7 +267,6 @@
         updateButtons();
       });
 
-      // filter buttons
       filterButtons.forEach(btn => {
         btn.addEventListener('click', () => {
           filterButtons.forEach(b => b.classList.remove('active'));
@@ -435,10 +276,9 @@
         });
       });
 
-      // MediaPipe hands (auto-capture)
+      // MediaPipe hands (auto-capture) - start only once
       const hands = new Hands({ locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}` });
       hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.7, minTrackingConfidence: 0.6 });
-
       let gestureCooldown = false;
       hands.onResults(results => {
         const has = results.multiHandLandmarks && results.multiHandLandmarks.length > 0;
@@ -449,7 +289,6 @@
         if (palmY > 0.28 && !gestureCooldown) {
           handHint.classList.add('detected');
           gestureCooldown = true;
-          // ensure camera started (mobile)
           startCamera().finally(() => { startCountdown(3); });
           setTimeout(()=> gestureCooldown = false, 3500);
         } else if (palmY <= 0.28) {
@@ -457,18 +296,29 @@
         }
       });
 
-      // Hook MediaPipe Camera util when video has frames
+      // only create Camera util once and start it after stream is active
       const cameraAI = new Camera(video, { onFrame: async () => { await hands.send({ image: video }); }, width: 640, height: 480 });
+      function startMediapipeIfNeeded() {
+        if (mediapipeStarted) return;
+        try {
+          cameraAI.start();
+          mediapipeStarted = true;
+        } catch (e) {
+          console.warn('mediapipe start skipped (already started?)', e);
+        }
+      }
+
+      // start mediapipe when video has enough frames
       video.addEventListener('loadeddata', () => {
-        try { cameraAI.start(); } catch(e){ /* ignore if already started */ }
+        if (cameraStarted) startMediapipeIfNeeded();
       });
 
-      // initial: load stored photos into session array and preview
+      // init preview from storage
       (function init(){
         try {
           const saved = JSON.parse(localStorage.getItem('capturedPhotos') || '[]');
           if (Array.isArray(saved) && saved.length) photos = saved.slice();
-        } catch(e){ /* ignore */ }
+        } catch(e){ /* ignore parse errors */ }
         renderPreview();
         updateButtons();
       })();
